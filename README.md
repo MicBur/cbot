@@ -2,6 +2,8 @@
 
 Dark Neon Trading / ML Frontend (reines C++ + Qt Quick) das mehrere Redis Keys (Port 6380) pollt und dynamisch animierte UI Komponenten bereitstellt.
 
+> Schema Version: Derzeit Redis Schema v1.1 (kompakte Candles `o,h,l,c,t` & Forecast Punkte `t,v`). Siehe Abschnitt "Redis Schema & Versionierung".
+
 ## Aktueller Funktionsumfang
 | Kategorie | Feature |
 |-----------|---------|
@@ -14,6 +16,17 @@ Dark Neon Trading / ML Frontend (reines C++ + Qt Quick) das mehrere Redis Keys (
 | Fehlerhandling | Overlay bei Redis Disconnect |
 | Animationen (Phase 1) | Preis Flash + Smooth Count-Up, Neon Pulse für aktive Tabs, Status-Badge Pulse, Sparkline Mini-Chart + Farbverlauf |
 
+## Quick Start (TL;DR)
+```powershell
+# Qt Pfad setzen
+$env:CMAKE_PREFIX_PATH="C:/Qt/6.6.0/msvc2019_64"
+mkdir build; cd build
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --target QtTradeFrontend
+./QtTradeFrontend.exe --redis-host 127.0.0.1 --redis-port 6380
+```
+Optional Deployment (Qt DLLs): windeployqt QtTradeFrontend.exe
+
 ## Noch offene / geplante Erweiterungen
 - Erweiterte Chart Overlays (Volumen, VWAP, Indikatoren)
 - Confidence Bands / Error Channels für Forecast
@@ -21,6 +34,9 @@ Dark Neon Trading / ML Frontend (reines C++ + Qt Quick) das mehrere Redis Keys (
 - Erweiterte Drawer Animation (Elastic / Spring)
 - Persistente User Settings (Layout / Theme Variationen, letztes Symbol)
 - Tooltip Metriken (Latenz, letzter Heartbeat) über StatusBadges
+- Fallback Parser für Legacy Candle Felder (timestamp/open/high/low/close/volume)
+- CI Workflow (GitHub Actions) für Build + Minimal Smoke Test
+- Tagging & Release Pipeline (v0.1.0)
 
 ## Voraussetzungen
 - Qt 6.6+ (Core, Quick, ggf. Quick Controls, Charts optional später)
@@ -85,6 +101,93 @@ Resultat: Host = 10.0.0.12 (ENV gewinnt).
 | `notifications` | JSON Array | [{ title, message, type, timestamp, read }, ...] |
 | `chart_data_<TICKER>` | JSON Array | Candle Daten (o,h,l,c,t) |
 | `predictions_<TICKER>` | JSON Array | Forecast Punkte { t, v } |
+
+## Redis Schema & Versionierung
+Aktuelle Schema-Version: **1.1** (festgehalten in `schema_meta` Key – siehe `redis.txt`).
+
+Änderungen v1.1:
+- Candles: Verbose Felder (`timestamp/open/high/low/close/volume`) -> kompakt (`t/o/h/l/c` + optional `vol`).
+- Predictions: Verbose (`timestamp/predicted_price`) -> kompakt (`t/v`).
+
+`schema_meta` Beispiel:
+```json
+{
+  "version": "1.1",
+  "compat": {
+    "candles_required": ["o","h","l","c","t"],
+    "candles_optional": ["vol"],
+    "predictions_required": ["t","v"],
+    "legacy_mapping": {
+      "timestamp":"t", "open":"o", "high":"h", "low":"l", "close":"c", "predicted_price":"v", "volume":"vol"
+    }
+  }
+}
+```
+
+Migrationsstrategie Backend (Empfohlen):
+1. Parallel legacy Keys für 1 Deploy-Zyklus mitschreiben (z.B. `chart_data_raw_<SYMBOL>`).
+2. Frontend nur neue kompakten Keys lesen.
+3. Nach Verifikation Legacy Keys entfernen.
+
+## Architektur Übersicht
+Schichtenmodell (vereinfacht):
+```
+Redis -> RedisClient (C++) -> DataPoller (Timer + Dispatch) -> Modelle (QAbstractListModel) -> QML Views/Components
+```
+Kernkomponenten:
+- `RedisClient`: Minimal Wrapper (connect, get/ping)
+- `DataPoller`: Periodischer Abruf (Intervall + Exponential Backoff), verteilt JSON an Models
+- Models: `MarketModel`, `PortfolioModel`, `OrdersModel`, `StatusModel`, `NotificationsModel`, `ChartDataModel`, `PredictionsModel`
+- QML UI: MarketList, CandleChart, StatusBadges, Notifications Drawer, SideNav
+
+## Datenfluss (Polling -> UI)
+```
+Timer tick -> DataPoller::poll()
+  -> GET market_data -> MarketModel::updateFromJson() (diff)
+  -> GET portfolio_positions -> PortfolioModel
+  -> GET active_orders -> OrdersModel
+  -> GET system_status -> StatusModel
+  -> GET notifications -> NotificationsModel
+  -> (wenn currentSymbol gesetzt)
+       -> GET chart_data_<SYMBOL> -> ChartDataModel::updateFromJson()
+       -> GET predictions_<SYMBOL> -> PredictionsModel::updateFromJson()
+Signals -> QML Bindings -> UI aktualisiert animiert
+```
+
+Backoff Strategie:
+```
+Start Intervall: 5s
+Fehler n -> 5s,10s,20s,30s (Cap)
+Erfolg -> Reset auf 5s
+```
+
+## Model Rollen (Roles)
+| Model | Rollen | Beschreibung |
+|-------|--------|--------------|
+| MarketModel | symbol, price, change, changePercent, direction | direction: -1/0/1 für Preisrichtung Flash |
+| ChartDataModel | o, h, l, c, t | kompaktes Candle Schema |
+| PredictionsModel | t, v | Forecast Punkte |
+| NotificationsModel | id, type, title, message, timestamp, read | Drawer Darstellung |
+
+## Performance Aspekte
+- Diff Updates im `MarketModel` minimieren QML Rebuilds
+- ResetModel nur für Candle/Forecast gewollt (komplette Erneuerung bei Symbolwechsel)
+- Minimale JSON Parsing-Pfade (direkt QJsonArray -> interne Strukturen)
+- Optionales Performance Logging (`--perf-log`) für Latenzbeobachtung
+
+## Erweiterbarkeit
+- Orderbuch / Depth könnten als eigenes Model analog angefügt werden
+- Indicators (EMA, RSI) precompute im Backend -> separater Key (`indicators_<SYMBOL>`) denkbar
+- Multi-Source Aggregation (mehrere Redis Namespaces) via konfigurierter Prefix-Liste
+
+## Build Matrix (zukünftig CI Empfehlung)
+| OS | Compiler | Status |
+|----|----------|--------|
+| Windows | MSVC / Ninja | Ziel (Release + windeployqt) |
+| Linux | GCC / Clang | Smoke Build |
+| macOS | Clang | Optional |
+
+Geplanter CI Job: Configure + Build + (Headless) Instanziierung von QGuiApplication für Smoke Test.
 
 ## Projektstruktur (gekürzt)
 ```
