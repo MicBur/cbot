@@ -1,6 +1,11 @@
 import QtQuick 2.15
+// Primärer Import für Effekte in Qt 6 (stellt DropShadow u.a. bereit)
+import QtQuick.Effects
+// Fallback (ältere Beispiele / Kompatibilität) – falls QtQuick.Effects nicht verfügbar ist
+import Qt5Compat.GraphicalEffects
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+
 import Frontend 1.0
 
 ApplicationWindow {
@@ -163,7 +168,14 @@ ApplicationWindow {
         Text { anchors.centerIn: parent; text: notificationDrawer.drawerState === 1 ? "×" : "🔔"; color: Theme.bg; font.pixelSize: 20 }
         MouseArea { anchors.fill: parent; onClicked: notificationDrawer.drawerState = notificationDrawer.drawerState === 1 ? 0 : 1 }
         Behavior on color { ColorAnimation { duration: Theme.durMed } }
-        dropShadow: DropShadow {}
+        layer.enabled: false
+        layer.effect: DropShadow {
+            radius: 16
+            samples: 24
+            horizontalOffset: 0
+            verticalOffset: 4
+            color: "#80000000"
+        }
     }
 
     // Error Overlay (Redis Down or System Down) - simple initial version

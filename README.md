@@ -27,6 +27,107 @@ cmake --build . --target QtTradeFrontend
 ```
 Optional Deployment (Qt DLLs): windeployqt QtTradeFrontend.exe
 
+## Deployment & Packaging (Windows)
+Für eine distributable Version (inkl. aller benötigten Qt/QML Module und `hiredis.dll`) kannst du entweder das PowerShell Skript nutzen oder die Schritte manuell ausführen.
+
+### 1. Automatisiertes Deployment (empfohlen)
+Skript: `scripts/deploy.ps1`
+
+Parameter Übersicht:
+| Parameter | Default | Beschreibung |
+|-----------|---------|--------------|
+| `-Configuration` | Release | Build-Konfiguration (Debug/Release) |
+| `-QtRoot` | (aus CMAKE_PREFIX_PATH | versucht autodetect) | Qt Basispfad (enthält `bin`, `qml`) |
+| `-DistDir` | dist | Zielordner für entpackte Runtime |
+| `-Zip` | false | Erstellt zusätzlich ein Zip-Archiv `QtTradeFrontend-<Version>.zip` |
+| `-PruneMinimal` | false | Entfernt optionale/ große nicht benötigte Module (WebEngine, Beispiele, Designer, unnötige Translations) |
+
+Beispiel:
+```powershell
+pwsh -ExecutionPolicy Bypass -File .\scripts\deploy.ps1 -Configuration Release -QtRoot "C:\Qt\6.6.0\msvc2019_64" -DistDir dist -Zip -PruneMinimal
+```
+Ergebnis:
+```
+dist/                 # Laufzeitordner
+  QtTradeFrontend.exe
+  hiredis.dll
+  platforms/qwindows.dll
+  qml/...
+QtTradeFrontend-0.1.0.zip  # (falls -Zip)
+```
+
+### 2. Manuelles Deployment (Fallback)
+Im Build-Verzeichnis:
+```powershell
+# ggf. vorher: cmake --build . --target QtTradeFrontend --config Release
+& "C:/Qt/6.6.0/msvc2019_64/bin/windeployqt.exe" .\QtTradeFrontend.exe
+Copy-Item ..\hiredis-1.3.0\dll\hiredis.dll . -Force  # Pfad anpassen falls anders
+```
+Falls QML Effekte wie `DropShadow` fehlen: Stelle sicher, dass nach Änderung der QML Importe (z.B. `import Qt5Compat.GraphicalEffects`) windeployqt erneut ausgeführt wurde.
+
+### 3. Optionaler Minimal-Prune (manuell)
+Nicht benötigte Verzeichnisse können nach dem Deployment entfernt werden (nur wenn deine App sie nicht nutzt):
+```
+dist\qml\QtWeb*          # WebEngine / WebView Module
+dist\qml\QtCharts*       # falls nicht benutzt
+dist\translations\qt_*.qm (außer qt_de/qt_en falls benötigt)
+dist\resources\* (Designer/Examples)
+```
+Skript-Variante erledigt dies bei `-PruneMinimal` automatisch (konservativ, lässt Kernmodule intakt).
+
+### 4. Versionierung
+Die Version stammt aus `project(VERSION ...)` (derzeit 0.1.0) und wird in `version.h` generiert (`QTTRADE_VERSION`). Für künftige Releases einfach in `CMakeLists.txt` anpassen und erneut bauen + deployen.
+
+### 5. Starten aus dist
+```powershell
+cd dist
+./QtTradeFrontend.exe --redis-host 127.0.0.1 --redis-port 6380
+```
+
+### 6. Geplante Verbesserung
+Ein automatischer Post-Build Copy-Schritt für `hiredis.dll` kann in CMake ergänzt werden (siehe unten in Abschnitt "Optionale CMake Ergänzung").
+
+### Troubleshooting
+| Symptom | Ursache | Lösung |
+|---------|---------|--------|
+| "Failed to load platform plugin 'windows'" | `platforms/qwindows.dll` fehlt | Erneut windeployqt ausführen / prüfen ob `dist/platforms` existiert |
+| QML Fehler: `DropShadow ist kein Typ` | GraphicalEffects Modul nicht paketiert | `import Qt5Compat.GraphicalEffects` in QML + erneut windeployqt |
+| Sofortiger Exit ohne Fenster | Fehlende DLL oder QML Parse Fehler | Start mit `set QT_DEBUG_PLUGINS=1` / `set QML_IMPORT_TRACE=1` prüfen |
+| Redis Status bleibt rot | Falscher Host/Port oder Redis nicht erreichbar | Parameter / Env Variablen prüfen (`--redis-host`, Firewall) |
+| Hohe Verzögerung / seltene Updates | Backoff aktiv nach Fehlern | Logs prüfen; Verbindung stabil -> Backoff normalisiert sich automatisch |
+
+Debug Env Variablen (vor Start setzen):
+```powershell
+$env:QT_DEBUG_PLUGINS=1
+$env:QML_IMPORT_TRACE=1
+./QtTradeFrontend.exe
+```
+
+### Optionale CMake Ergänzung (hiredis DLL Copy)
+Falls `hiredis.dll` nicht automatisch im Build-Ausgabeverzeichnis landet:
+```cmake
+add_custom_command(TARGET QtTradeFrontend POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          $<TARGET_FILE:hiredis>
+          $<TARGET_FILE_DIR:QtTradeFrontend>)
+```
+Damit landet `hiredis.dll` direkt neben der Exe und wird beim Deployment mitgenommen.
+
+---
+
+## Release Workflow (Empfohlen)
+1. Versionsnummer in `CMakeLists.txt` erhöhen
+2. Bauen (Release)
+3. Deployment Skript ausführen mit `-Zip -PruneMinimal`
+4. Teststart aus `dist`
+5. Git Tag setzen: `git tag v<Version>; git push --tags`
+6. GitHub Release anlegen (Zip anhängen, Changelog Auszug)
+
+Changelog-Abschnitt für 0.1.0 (Kurzform):
+```
+Initiale Version: Core UI, Redis Polling, Diff Models, Market/Portfolio/Orders/Status/Notifications, Candle + Forecast Chart, Deployment Skript.
+```
+
 ## Noch offene / geplante Erweiterungen
 - Erweiterte Chart Overlays (Volumen, VWAP, Indikatoren)
 - Confidence Bands / Error Channels für Forecast
@@ -37,6 +138,7 @@ Optional Deployment (Qt DLLs): windeployqt QtTradeFrontend.exe
 - Fallback Parser für Legacy Candle Felder (timestamp/open/high/low/close/volume)
 - CI Workflow (GitHub Actions) für Build + Minimal Smoke Test
 - Tagging & Release Pipeline (v0.1.0)
+  - (Basis umgesetzt: Version, Deployment Script, Packaging Anleitung)
 
 ## Voraussetzungen
 - Qt 6.6+ (Core, Quick, ggf. Quick Controls, Charts optional später)

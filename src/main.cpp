@@ -66,12 +66,26 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("predictionsModel", &predictionsModel);
     engine.rootContext()->setContextProperty("poller", &poller);
 
-    const QUrl url(u"qrc:/Frontend/qml/Main.qml"_qs);
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
-    engine.load(url);
+    // QML Logging für Diagnose
+    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &ctx, const QString &msg){
+        if(type == QtFatalMsg) {
+            qCritical() << "FATAL:" << msg;
+            abort();
+        } else if(type == QtCriticalMsg) {
+            qCritical() << msg;
+        } else if(type == QtWarningMsg) {
+            qWarning() << msg;
+        } else {
+            qDebug() << msg;
+        }
+    });
+
+    // Laden über QML Modul (URI Frontend, Version 1.0) statt direkter qrc URL
+    engine.loadFromModule(u"Frontend", u"Main");
+    if(engine.rootObjects().isEmpty()) {
+        qCritical() << "Keine Root QML geladen (Frontend/Main)";
+        return -1;
+    }
 
     return app.exec();
 }

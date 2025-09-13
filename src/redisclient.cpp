@@ -1,6 +1,14 @@
+// Redis Client Implementation (real or stub depending on REDIS_STUB)
 #include "redisclient.h"
-#include <hiredis/hiredis.h>
 #include <iostream>
+
+#ifndef REDIS_STUB
+#if defined(HIREDIS_VENDORED)
+#include <hiredis.h>
+#else
+#include <hiredis/hiredis.h>
+#endif
+#endif
 
 RedisClient::RedisClient(const std::string& host, int port, int db, const std::string& password)
     : m_host(host), m_port(port), m_db(db), m_password(password) {}
@@ -8,13 +16,18 @@ RedisClient::RedisClient(const std::string& host, int port, int db, const std::s
 RedisClient::~RedisClient() { freeContext(); }
 
 void RedisClient::freeContext() {
-    if (m_ctx) {
-        redisFree(m_ctx);
-        m_ctx = nullptr;
-    }
+#ifndef REDIS_STUB
+    if (m_ctx) { redisFree(m_ctx); m_ctx = nullptr; }
+#else
+    m_ctx = nullptr;
+#endif
 }
 
 bool RedisClient::connect() {
+#ifdef REDIS_STUB
+    // Stub: always "connected" logically but no backend
+    return false; // signal no live data -> poller kann fallback verwenden
+#else
     if (m_ctx) return true;
     m_ctx = redisConnect(m_host.c_str(), m_port);
     if (!m_ctx || m_ctx->err) {
@@ -36,9 +49,13 @@ bool RedisClient::connect() {
         freeReplyObject(reply);
     }
     return true;
+#endif
 }
 
 bool RedisClient::authIfNeeded() {
+#ifdef REDIS_STUB
+    return false;
+#else
     redisReply* reply = (redisReply*)redisCommand(m_ctx, "AUTH %s", m_password.c_str());
     if (!reply) {
         std::cerr << "Redis auth no reply" << std::endl;
@@ -53,30 +70,33 @@ bool RedisClient::authIfNeeded() {
     }
     freeReplyObject(reply);
     return true;
+#endif
 }
 
 bool RedisClient::ping() {
+#ifdef REDIS_STUB
+    return false;
+#else
     if (!connect()) return false;
     redisReply* reply = (redisReply*)redisCommand(m_ctx, "PING");
     if (!reply) return false;
     bool ok = (reply->type == REDIS_REPLY_STATUS || reply->type == REDIS_REPLY_STRING);
     freeReplyObject(reply);
     return ok;
+#endif
 }
 
 std::optional<std::string> RedisClient::get(const std::string& key) {
+#ifdef REDIS_STUB
+    return std::nullopt;
+#else
     if (!connect()) return std::nullopt;
     redisReply* reply = (redisReply*)redisCommand(m_ctx, "GET %s", key.c_str());
     if (!reply) return std::nullopt;
-    if (reply->type == REDIS_REPLY_NIL) {
-        freeReplyObject(reply);
-        return std::nullopt;
-    }
-    if (reply->type != REDIS_REPLY_STRING) {
-        freeReplyObject(reply);
-        return std::nullopt;
-    }
+    if (reply->type == REDIS_REPLY_NIL) { freeReplyObject(reply); return std::nullopt; }
+    if (reply->type != REDIS_REPLY_STRING) { freeReplyObject(reply); return std::nullopt; }
     std::string val(reply->str, reply->len);
     freeReplyObject(reply);
     return val;
+#endif
 }

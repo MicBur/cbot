@@ -1,11 +1,11 @@
 <RCC>
   <qresource prefix="/qml">
-    <file>qml/Main.qml</file>
-    <file>qml/Theme.qml</file>
-    <file>qml/components/HeaderBar.qml</file>
-    <file>qml/components/SideNav.qml</file>
-    <file>qml/components/MarketList.qml</file>
-    <file>qml/components/StatusBadge.qml</file>
-    <file>qml/components/CandleChart.qml</file>
+  <file alias="Main.qml">qml/Main.qml</file>
+  <file alias="Theme.qml">qml/Theme.qml</file>
+  <file alias="components/HeaderBar.qml">qml/components/HeaderBar.qml</file>
+  <file alias="components/SideNav.qml">qml/components/SideNav.qml</file>
+  <file alias="components/MarketList.qml">qml/components/MarketList.qml</file>
+  <file alias="components/StatusBadge.qml">qml/components/StatusBadge.qml</file>
+  <file alias="components/CandleChart.qml">qml/components/CandleChart.qml</file>
   </qresource>
 </RCC>

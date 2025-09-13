@@ -6,12 +6,12 @@
 
 class StatusModel : public QObject {
     Q_OBJECT
-    Q_PROPERTY(bool redisConnected READ redisConnected NOTIFY changed)
-    Q_PROPERTY(bool postgresConnected READ postgresConnected NOTIFY changed)
-    Q_PROPERTY(bool alpacaApiActive READ alpacaApiActive NOTIFY changed)
-    Q_PROPERTY(bool grokApiActive READ grokApiActive NOTIFY changed)
-    Q_PROPERTY(bool workerRunning READ workerRunning NOTIFY changed)
-    Q_PROPERTY(QString lastHeartbeat READ lastHeartbeat NOTIFY changed)
+    Q_PROPERTY(bool redisConnected READ redisConnected NOTIFY statusChanged)
+    Q_PROPERTY(bool postgresConnected READ postgresConnected NOTIFY statusChanged)
+    Q_PROPERTY(bool alpacaApiActive READ alpacaApiActive NOTIFY statusChanged)
+    Q_PROPERTY(bool grokApiActive READ grokApiActive NOTIFY statusChanged)
+    Q_PROPERTY(bool workerRunning READ workerRunning NOTIFY statusChanged)
+    Q_PROPERTY(QString lastHeartbeat READ lastHeartbeat NOTIFY statusChanged)
 public:
     explicit StatusModel(QObject* parent=nullptr): QObject(parent) {}
 
@@ -32,10 +32,10 @@ public:
         upd(m_grokApiActive, o.value("grok_api_active").toBool());
         upd(m_workerRunning, o.value("worker_running").toBool());
         QString hb = o.value("last_heartbeat").toString(); if (m_lastHeartbeat!=hb){ m_lastHeartbeat=hb; changed=true; }
-        if(changed) emit changed();
+        if(changed) emit statusChanged();
     }
 signals:
-    void changed();
+    void statusChanged();
 private:
     bool m_redisConnected=false;
     bool m_postgresConnected=false;
