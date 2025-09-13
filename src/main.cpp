@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("predictionsModel", &predictionsModel);
     engine.rootContext()->setContextProperty("poller", &poller);
 
-    const QUrl url(u"qrc:/Frontend/qml/Main.qml"_qs);
+    const QUrl url(u"qrc:/qml/qml/Main.qml"_qs);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);

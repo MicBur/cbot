@@ -32,7 +32,7 @@ public:
         upd(m_grokApiActive, o.value("grok_api_active").toBool());
         upd(m_workerRunning, o.value("worker_running").toBool());
         QString hb = o.value("last_heartbeat").toString(); if (m_lastHeartbeat!=hb){ m_lastHeartbeat=hb; changed=true; }
-        if(changed) emit changed();
+        if(changed) emit this->changed();
     }
 signals:
     void changed();

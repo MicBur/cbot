@@ -1,7 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import Frontend 1.0
 
 ApplicationWindow {
     id: root
@@ -163,7 +162,6 @@ ApplicationWindow {
         Text { anchors.centerIn: parent; text: notificationDrawer.drawerState === 1 ? "×" : "🔔"; color: Theme.bg; font.pixelSize: 20 }
         MouseArea { anchors.fill: parent; onClicked: notificationDrawer.drawerState = notificationDrawer.drawerState === 1 ? 0 : 1 }
         Behavior on color { ColorAnimation { duration: Theme.durMed } }
-        dropShadow: DropShadow {}
     }
 
     // Error Overlay (Redis Down or System Down) - simple initial version

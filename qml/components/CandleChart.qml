@@ -1,7 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import Frontend 1.0
 
 /*
   CandleChart Placeholder
@@ -19,6 +18,7 @@ Item {
     property int maxCandles: 120
     property string currentTicker: poller ? poller.currentSymbol : "AAPL"
     property bool useMock: candles.length === 0
+    property real forecastOpacity: 0.8
 
     // Neue Properties für echte Modelle
     property var modelCandles: chartDataModel // ChartDataModel aus Context

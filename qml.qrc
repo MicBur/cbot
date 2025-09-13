@@ -2,6 +2,7 @@
   <qresource prefix="/qml">
     <file>qml/Main.qml</file>
     <file>qml/Theme.qml</file>
+    <file>qml/qmldir</file>
     <file>qml/components/HeaderBar.qml</file>
     <file>qml/components/SideNav.qml</file>
     <file>qml/components/MarketList.qml</file>
