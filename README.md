@@ -60,6 +60,28 @@ cmake --build . --target QtTradeFrontend
 
 Falls du kein Ninja hast, kannst du `-G "Visual Studio 17 2022"` verwenden.
 
+### Alternative: qmake Build (zusätzlich zur CMake Variante)
+Voraussetzung: Qt Entwicklungs-Eingabeaufforderung oder env: `qmake` im PATH.
+
+#### MinGW Beispiel
+```powershell
+qmake QtTradeFrontend.pro
+mingw32-make -j4
+./QtTradeFrontend.exe
+```
+
+#### MSVC Beispiel (Developer Command Prompt)
+```powershell
+qmake QtTradeFrontend.pro
+nmake
+QtTradeFrontend.exe
+```
+
+Deployment (Qt libs):
+```powershell
+windeployqt QtTradeFrontend.exe
+```
+
 ## Ausführen
 ```powershell
 # Im build Verzeichnis
