@@ -25,7 +25,6 @@ set(SOURCES
     src/datapoller.cpp
     src/portfoliomodel.cpp
     src/ordersmodel.cpp
-    src/statusmodel.cpp
     src/notificationsmodel.cpp
 )
 
@@ -56,6 +55,7 @@ qt_add_qml_module(QtTradeFrontend
         qml/components/SideNav.qml
         qml/components/MarketList.qml
         qml/components/StatusBadge.qml
+        qml/components/CandleChart.qml
 )
 
 target_include_directories(QtTradeFrontend PRIVATE ${HIREDIS_INCLUDE_DIR})
