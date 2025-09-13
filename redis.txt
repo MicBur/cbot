@@ -1,0 +1,286 @@
+##############################################
+# Qt Tradebot – Redis Schema (Version 1.1)
+# Aktualisiert: 2025-09-13
+# Zweck: Vereinheitlichte, kompakte Keys für Frontend (Qt/QML) – Minimierung von Payload & Parsing Overhead
+# Änderungsschwerpunkt dieser Version: Candles & Predictions auf Kurzfelder (o,h,l,c,t / t,v) normalisiert.
+##############################################
+
+## 0. Schema Meta
+Key: schema_meta
+Format:
+{
+  "version": "1.1",
+  "updated_at": "2025-09-13T14:30:00Z",
+  "notes": "Verbose Candle-Felder (open/high/low/close/timestamp, predicted_price) sind deprecated.",
+  "compat": {
+    "candles_required": ["o","h","l","c","t"],
+    "candles_optional": ["vol"],
+    "predictions_required": ["t","v"],
+    "legacy_mapping": {
+      "timestamp":"t", "open":"o", "high":"h", "low":"l", "close":"c", "predicted_price":"v", "volume":"vol"
+    }
+  }
+}
+
+----------------------------------------------
+## 1. Marktdaten (Übersicht – Market Ticker Liste)
+Key: market_data
+Format (Object mit Symbol -> Snapshot):
+{
+  "AAPL": {"price": 234.07, "change": 4.04, "change_percent": 1.7563},
+  "NVDA": {"price": 112.15, "change": -1.12, "change_percent": -0.99},
+  ...
+}
+Hinweis: Backend aktualisiert atomar (SET + EXPIRE optional). Frontend führt Diff-Update durch.
+
+----------------------------------------------
+## 2. Candlestick-Daten (Charts)
+NEU kompakt
+Key: chart_data_<SYMBOL>
+Format (Array jüngste Kerzen, aufsteigend oder absteigend konsistent halten!):
+[
+  {"t": 1694606400, "o": 234.10, "h": 235.00, "l": 233.90, "c": 234.70},
+  {"t": 1694606460, "o": 234.70, "h": 235.20, "l": 234.50, "c": 235.10, "vol": 15320},
+  ...
+]
+Pflicht: o,h,l,c,t
+Optional: vol (als "vol" – NICHT "v", da "v" bei Predictions belegt ist)
+
+LEGACY (ALT – wird entfernt):
+[{"timestamp":..., "open":..., "high":..., "low":..., "close":..., "volume":...}]
+Mapping siehe schema_meta.compat.legacy_mapping.
+
+Migrationsstrategie Backend:
+1. Parallel: zusätzlich chart_data_raw_<SYMBOL> (legacy) für max. 1 Deploy-Zyklus.
+2. Frontend nutzt nur chart_data_<SYMBOL> kompakt.
+3. Nach Stabilität raw-Keys löschen.
+
+----------------------------------------------
+## 3. Prognosen (Forecast Points)
+Key: predictions_<SYMBOL>
+Format:
+[
+  {"t": 1694606700, "v": 235.10},
+  {"t": 1694606760, "v": 235.34},
+  ...
+]
+Pflicht: t (Epoch Sekunden oder ms – Empfehlung: Sekunden konsistent), v (Vorhersagepreis)
+
+LEGACY: {"timestamp":..., "predicted_price":...}
+
+Optional (erweiterbar – NICHT jetzt im Frontend genutzt): confidence (Float 0..1) => Feldname "conf".
+
+----------------------------------------------
+## 4. Portfolio
+Key: portfolio_equity
+[
+  {"timestamp": "2025-09-13T14:20:00Z", "equity_value": 125430.50},
+  ...
+]
+
+Key: portfolio_positions
+[
+  {"ticker": "AAPL", "qty": 100, "avg_price": 150.25, "side": "long"},
+  ...
+]
+
+----------------------------------------------
+## 5. Aktive Orders
+Key: active_orders
+[
+  {"ticker": "AAPL", "side": "buy", "price": 234.90, "status": "open", "timestamp": "2025-09-13T14:25:00Z"},
+  ...
+]
+
+----------------------------------------------
+## 6. Modell Basisstatus
+Key: model_trained -> "true" | "false"
+Key: model_path    -> String (z.B. "./autogluon_model")
+
+----------------------------------------------
+## 7. Trading / Alpaca Credentials & Modus
+Key: alpaca_api_key
+Key: alpaca_secret
+Key: alpaca_mode -> "live" | "paper"
+
+----------------------------------------------
+## 8. Grok Top 10
+Key: grok_top10
+[
+  {"ticker": "AAPL", "score": 0.92, "reason": "AI Momentum, Earnings Beat"},
+  ...
+]
+
+## 9. Grok Deeper Search
+Key: grok_deepersearch
+[
+  {"ticker": "AAPL", "score": 0.92, "analysis": "Strong AI momentum", "details": {"sector":"Tech"}},
+  ...
+]
+
+----------------------------------------------
+## 10. ML Status
+Key: ml_status
+{
+  "training_active": false,
+  "last_training": "2025-09-13T10:30:00Z",
+  "training_progress": 0.75,
+  "data_points": 2880,
+  "model_accuracy": 0.87,
+  "next_scheduled": "2025-09-14T09:00:00Z"
+}
+
+Key: ml_training_log
+[
+  {"timestamp": "2025-09-13T10:30:00Z", "event": "Training started", "details": "2880 data points"},
+  {"timestamp": "2025-09-13T10:35:00Z", "event": "Training completed", "details": "Accuracy: 0.87"},
+  ...
+]
+
+----------------------------------------------
+## 11. Grok Status
+Key: grok_status
+{
+  "fetching_active": false,
+  "last_fetch": "2025-09-13T09:05:00Z",
+  "fetch_count": 15,
+  "api_calls_today": 45,
+  "next_scheduled": "2025-09-14T09:05:00Z"
+}
+
+Key: grok_fetch_log
+[
+  {"timestamp": "2025-09-13T09:05:00Z", "event": "Grok fetch started", "details": "Top10 + DeepSearch"},
+  ...
+]
+
+----------------------------------------------
+## 12. Manuelle Trigger
+Key: manual_trigger_grok -> "true" setzt Worker an, Worker setzt wieder "false" nach Start
+Key: manual_trigger_ml   -> analog
+
+Key: manual_trigger_status
+{
+  "grok_requested": false,
+  "grok_running": false,
+  "ml_requested": false,
+  "ml_running": false,
+  "last_manual_grok": "2025-09-13T14:20:00Z",
+  "last_manual_ml": "2025-09-13T14:15:00Z"
+}
+
+----------------------------------------------
+## 13. Schedules
+Key: grok_schedule
+{
+  "enabled": true,
+  "hour": 9,
+  "minute": 5,
+  "interval_minutes": 60,
+  "weekdays_only": true
+}
+
+Key: ml_schedule
+{
+  "enabled": true,
+  "hour": 2,
+  "minute": 0,
+  "interval_hours": 6,
+  "weekdays_only": false
+}
+
+----------------------------------------------
+## 14. Alpaca Account
+Key: alpaca_account
+{
+  "portfolio_value": "125430.50",
+  "buying_power": "25000.00",
+  "equity": "125430.50",
+  "day_trade_buying_power": "100000.00",
+  "daytrade_count": "2",
+  "trading_blocked": false,
+  "account_blocked": false,
+  "pattern_day_trader": true
+}
+
+## 15. Alpaca Positionen
+Key: alpaca_positions
+[
+  {"symbol": "AAPL", "qty": "100", "avg_entry_price": "150.25", "market_value": "15025.00", "unrealized_pl": "275.00"},
+  ...
+]
+
+## 16. Alpaca Orders
+Key: alpaca_orders
+[
+  {"id": "12345", "symbol": "AAPL", "side": "buy", "qty": "10", "filled_qty": "10", "status": "filled", "created_at": "2025-09-13T10:00:00Z"},
+  ...
+]
+
+----------------------------------------------
+## 17. System Status
+Key: system_status
+{
+  "redis_connected": true,
+  "postgres_connected": true,
+  "finnhub_api_active": true,
+  "alpaca_api_active": true,
+  "grok_api_active": true,
+  "worker_running": true,
+  "last_heartbeat": "2025-09-13T14:25:30Z",
+  "uptime_seconds": 86400
+}
+
+----------------------------------------------
+## 18. Error Logs
+Key: error_log
+[
+  {"timestamp": "2025-09-13T14:20:00Z", "level": "ERROR", "component": "ML", "message": "Training failed: insufficient data"},
+  {"timestamp": "2025-09-13T14:15:00Z", "level": "WARNING", "component": "Grok", "message": "API rate limit reached"},
+  ...
+]
+
+----------------------------------------------
+## 19. Performance Metrics
+Key: performance_metrics
+{
+  "api_response_times": {"finnhub_avg_ms": 245, "alpaca_avg_ms": 189, "grok_avg_ms": 1250},
+  "data_freshness": {"market_data_age_seconds": 45, "portfolio_age_seconds": 120, "predictions_age_minutes": 15},
+  "memory_usage_mb": 512,
+  "cpu_usage_percent": 23.5
+}
+
+----------------------------------------------
+## 20. Notifications
+Key: notifications
+[
+  {"id": 1, "type": "success", "title": "ML Training Complete", "message": "Model trained with 87% accuracy", "timestamp": "2025-09-13T14:30:00Z", "read": false},
+  {"id": 2, "type": "warning", "title": "Grok API Limit", "message": "Approaching daily API limit", "timestamp": "2025-09-13T14:25:00Z", "read": true},
+  ...
+]
+
+Key: notification_settings
+{
+  "ml_completion": true,
+  "grok_completion": true,
+  "error_alerts": true,
+  "performance_warnings": true,
+  "daily_summary": true
+}
+
+----------------------------------------------
+## 21. Verbindung (Deployment Hinweis – nicht im Code auslesen!)
+Host: <server-ip>
+Port: 6379
+Passwort: pass123
+
+Security Hinweis: Zugangsdaten nicht im Repo in Klartext halten – env / secrets nutzen.
+
+##############################################
+# Migrations-Checkliste (Backend)
+# 1. chart_data_<SYMBOL> jetzt kompakt schreiben
+# 2. predictions_<SYMBOL> jetzt mit t,v
+# 3. Optional: raw Keys löschen nach Verifikation
+# 4. schema_meta.version auf 1.1 belassen bis nächste inkompatible Änderung
+##############################################
+
