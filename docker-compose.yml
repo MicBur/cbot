@@ -2,23 +2,26 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:2
+    image: redis:7-alpine
     ports:
       - "6379:6379"
     command: redis-server --requirepass pass123
+    volumes:
+      - redisdata:/data
     networks:
       - qt_trade_network
 
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     environment:
-      POSTGRES_DB: qt_trade
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pass123
+      POSTGRES_DB: qt_trade
     ports:
       - "5432:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - /app/pg:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     networks:
       - qt_trade_network
 
@@ -32,22 +35,32 @@ services:
     environment:
       - REDIS_URL=redis://:pass123@redis:6379/0
       - DATABASE_URL=postgresql://postgres:pass123@postgres:5432/qt_trade
+    command: celery -A worker worker --loglevel=info | cat
     volumes:
       - .:/app
     networks:
       - qt_trade_network
 
-  traefik:
-    image: traefik:v2.10
-    ports:
-      - "8080:80"
-      - "8443:443"
+  beat:
+    build: .
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://:pass123@redis:6379/0
+      - DATABASE_URL=postgresql://postgres:pass123@postgres:5432/qt_trade
+    command: celery -A worker beat --loglevel=info | cat
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik.toml:/etc/traefik/traefik.toml
+      - .:/app
     networks:
       - qt_trade_network
 
 networks:
   qt_trade_network:
     driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:

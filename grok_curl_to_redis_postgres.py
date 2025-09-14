@@ -1,22 +1,28 @@
+import os
 import subprocess
 import json
 import redis
 import psycopg2
 from datetime import datetime
 
-# API-Key und Prompt
-API_KEY = "xai-cZslF1Zne1kcznLfW5rwOUJxAjc43TQx07ewfcNmA5XmJ7qVlEOEVGhEe196u82Qkk7YPkxmbKfIdX9V"
+API_KEY = os.getenv("XAI_API_KEY", "")
+MODEL = os.getenv("XAI_MODEL", "grok-4-latest")
+REDIS_URL = os.getenv("REDIS_URL", "redis://:pass123@localhost:6379/0")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pass123@localhost:5432/qt_trade")
+
+if not API_KEY:
+    raise SystemExit("XAI_API_KEY is not set")
+
 prompt = {
     "messages": [
         {"role": "system", "content": "You are a helpful assistant with access to real-time search. Give the top 10 US stocks with highest 7-day gain probability. Output JSON with ticker, score, reason."},
-        {"role": "user", "content": "Gib die Top 10 US-Aktien mit höchster 7-Tage-Gewinnwahrscheinlichkeit als JSON."}
+        {"role": "user", "content": "Gib die Top 10 US-Aktien mit h\u00f6chster 7-Tage-Gewinnwahrscheinlichkeit als JSON."}
     ],
-    "model": "grok-4-latest",
+    "model": MODEL,
     "stream": False,
     "temperature": 0
 }
 
-# Curl-Request
 curl_cmd = [
     "curl", "https://api.x.ai/v1/chat/completions",
     "-H", "Content-Type: application/json",
@@ -24,36 +30,38 @@ curl_cmd = [
     "-d", json.dumps(prompt)
 ]
 result = subprocess.run(curl_cmd, capture_output=True, text=True)
-response = result.stdout
+response = result.stdout or result.stderr
 
-# Extrahiere JSON aus Antwort
 try:
     data = json.loads(response)
     top10 = None
-    # Versuche, die eigentliche Top10-Liste zu finden
-    if "choices" in data and data["choices"]:
+    if isinstance(data, dict) and data.get("choices"):
         msg = data["choices"][0]["message"]["content"]
         top10 = json.loads(msg) if isinstance(msg, str) else msg
 except Exception:
-    top10 = response
+    top10 = None
 
-# Schreibe in Redis
-r = redis.Redis(host="qbot-redis-1", port=6379, password="pass123", decode_responses=True)
-r.set("grok_top10", json.dumps(top10))
+r = redis.from_url(REDIS_URL, decode_responses=True)
+if top10 is not None:
+    r.set("grok_top10", json.dumps(top10))
 
-# Schreibe in Postgres
-def save_to_postgres(top10):
-    conn = psycopg2.connect(dbname="qt_trade", user="postgres", password="pass123", host="qbot-postgres-1")
+def save_to_postgres(top10_list):
+    if not isinstance(top10_list, list):
+        return
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    if isinstance(top10, list):
-        for rec in top10:
-            cur.execute("""
-                INSERT INTO grok_recommendations (time, ticker, score, reason)
-                VALUES (%s, %s, %s, %s)
-            """, (datetime.now(), rec.get("ticker"), rec.get("score"), rec.get("reason")))
-        conn.commit()
+    for rec in top10_list:
+        cur.execute(
+            """
+            INSERT INTO grok_recommendations (time, ticker, score, reason)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (datetime.now(), rec.get("ticker"), rec.get("score"), rec.get("reason"))
+        )
+    conn.commit()
     cur.close()
     conn.close()
 
 save_to_postgres(top10)
-print("Grok Top10 gespeichert in Redis und Postgres.")
+print("Grok Top10 gespeichert.")
+
