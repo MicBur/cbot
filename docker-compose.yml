@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:2
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass pass123
+    networks:
+      - qt_trade_network
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: qt_trade
+      POSTGRES_PASSWORD: pass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /app/pg:/var/lib/postgresql/data
+    networks:
+      - qt_trade_network
+
+  worker:
+    build: .
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://:pass123@redis:6379/0
+      - DATABASE_URL=postgresql://postgres:pass123@postgres:5432/qt_trade
+    volumes:
+      - .:/app
+    networks:
+      - qt_trade_network
+
+  traefik:
+    image: traefik:v2.10
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.toml:/etc/traefik/traefik.toml
+    networks:
+      - qt_trade_network
+
+networks:
+  qt_trade_network:
+    driver: bridge

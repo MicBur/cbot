@@ -1,0 +1,260 @@
+# Qt Tradebot: Redis-Daten für das Frontend
+
+## 1. Marktdaten (Dashboard)
+Key: market_data
+Format:
+{
+  "AAPL": {"price": 234.07, "change": 4.04, "change_percent": 1.7563},
+  "NVDA": {...},
+  ...
+}
+
+## 2. Candlestick-Daten (Charts)
+Key: chart_data_<TICKER>
+Format:
+[
+  {"timestamp": ..., "open": ..., "high": ..., "low": ..., "close": ..., "volume": ...},
+  ...
+]
+
+## 3. Prognosen (Charts)
+Key: predictions_<TICKER>
+Format:
+[
+  {"timestamp": ..., "predicted_price": ...},
+  ...
+]
+
+## 4. Portfolio-Daten
+Key: portfolio_equity
+Format:
+[
+  {"timestamp": ..., "equity_value": ...},
+  ...
+]
+
+Key: portfolio_positions
+Format:
+[
+  {"ticker": ..., "qty": ..., "avg_price": ..., "side": ...},
+  ...
+]
+
+## 5. Aktive Orders (Trades)
+Key: active_orders
+Format:
+[
+  {"ticker": ..., "side": ..., "price": ..., "status": ..., "timestamp": ...},
+  ...
+]
+
+## 6. Modell-Status (Settings)
+Key: model_trained
+Wert: "true" oder "false"
+
+Key: model_path
+Wert: "./autogluon_model"
+
+# Verbindung
+Host: <deine-server-ip>
+Port: 6379
+Passwort: pass123
+
+
+## 7. Alpaca-API und Trading-Modus
+Key: alpaca_api_key
+Wert: <dein Alpaca API Key>
+
+Key: alpaca_secret
+Wert: <dein Alpaca Secret>
+
+Key: alpaca_mode
+Wert: "live" oder "paper"
+
+
+## 14. Alpaca Account
+Key: alpaca_account
+Format:
+{
+  "portfolio_value": "125430.50",
+  "buying_power": "25000.00", 
+  "equity": "125430.50",
+  "day_trade_buying_power": "100000.00",
+  "daytrade_count": "2",
+  "trading_blocked": false,
+  "account_blocked": false,
+  "pattern_day_trader": true
+}
+
+## 15. Alpaca Positionen
+Key: alpaca_positions
+Format:
+[
+  {"symbol": "AAPL", "qty": "100", "avg_entry_price": "150.25", "market_value": "15025.00", "unrealized_pl": "275.00"},
+  ...
+]
+
+## 16. Alpaca Orders
+Key: alpaca_orders
+Format:
+[
+  {"id": "12345", "symbol": "AAPL", "side": "buy", "qty": "10", "filled_qty": "10", "status": "filled", "created_at": "2025-09-13T10:00:00Z"},
+  ...
+]
+
+
+## 8. Grok-Top10 Empfehlungen
+Key: grok_top10
+Format:
+[
+  {"ticker": "AAPL", "score": 0.92, "reason": "AI Momentum, Earnings Beat"},
+  {"ticker": "NVDA", "score": 0.89, "reason": "Chip Rally, Upgrades"},
+  ...
+]
+
+## 9. Grok Deeper Search
+Key: grok_deepersearch
+Format:
+[
+  {"ticker": "AAPL", "score": 0.92, "analysis": "Strong AI momentum", "details": {...}},
+  {"ticker": "NVDA", "score": 0.89, "analysis": "Chip sector rally", "details": {...}},
+  ...
+]
+
+## 10. ML/AutoGluon Status (Settings)
+Key: ml_status
+Format:
+{
+  "training_active": false,
+  "last_training": "2025-09-13T10:30:00Z",
+  "training_progress": 0.75,
+  "data_points": 2880,
+  "model_accuracy": 0.87,
+  "next_scheduled": "2025-09-14T09:00:00Z"
+}
+
+Key: ml_training_log
+Format:
+[
+  {"timestamp": "2025-09-13T10:30:00Z", "event": "Training started", "details": "2880 data points"},
+  {"timestamp": "2025-09-13T10:35:00Z", "event": "Training completed", "details": "Accuracy: 0.87"},
+  ...
+]
+
+## 11. Grok Status (Settings)
+Key: grok_status
+Format:
+{
+  "fetching_active": false,
+  "last_fetch": "2025-09-13T09:05:00Z",
+  "fetch_count": 15,
+  "api_calls_today": 45,
+  "next_scheduled": "2025-09-14T09:05:00Z"
+}
+
+Key: grok_fetch_log
+Format:
+[
+  {"timestamp": "2025-09-13T09:05:00Z", "event": "Grok fetch started", "details": "Top10 + DeepSearch"},
+  {"timestamp": "2025-09-13T09:06:00Z", "event": "Grok fetch completed", "details": "10 recommendations"},
+  ...
+]
+
+## 12. Manual Triggers (Settings)
+Key: manual_trigger_grok
+Wert: "true" oder "false" (Frontend setzt auf "true" zum Auslösen)
+
+Key: manual_trigger_ml
+Wert: "true" oder "false" (Frontend setzt auf "true" zum Auslösen)
+
+Key: manual_trigger_status
+Format:
+{
+  "grok_requested": false,
+  "grok_running": false,
+  "ml_requested": false,
+  "ml_running": false,
+  "last_manual_grok": "2025-09-13T14:20:00Z",
+  "last_manual_ml": "2025-09-13T14:15:00Z"
+}
+
+## 13. Schedule Settings (Settings)
+Key: grok_schedule
+Format:
+{
+  "enabled": true,
+  "hour": 9,
+  "minute": 5,
+  "interval_minutes": 60,
+  "weekdays_only": true
+}
+
+Key: ml_schedule
+Format:
+{
+  "enabled": true,
+  "hour": 2,
+  "minute": 0,
+  "interval_hours": 6,
+  "weekdays_only": false
+}
+
+## 17. System Status (Dashboard)
+Key: system_status
+Format:
+{
+  "redis_connected": true,
+  "postgres_connected": true,
+  "finnhub_api_active": true,
+  "alpaca_api_active": true,
+  "grok_api_active": true,
+  "worker_running": true,
+  "last_heartbeat": "2025-09-13T14:25:30Z",
+  "uptime_seconds": 86400
+}
+
+## 18. Error Logs (Settings)
+Key: error_log
+Format:
+[
+  {"timestamp": "2025-09-13T14:20:00Z", "level": "ERROR", "component": "ML", "message": "Training failed: insufficient data"},
+  {"timestamp": "2025-09-13T14:15:00Z", "level": "WARNING", "component": "Grok", "message": "API rate limit reached"},
+  ...
+]
+
+## 19. Performance Metrics (Dashboard)
+Key: performance_metrics
+Format:
+{
+  "api_response_times": {
+    "finnhub_avg_ms": 245,
+    "alpaca_avg_ms": 189,
+    "grok_avg_ms": 1250
+  },
+  "data_freshness": {
+    "market_data_age_seconds": 45,
+    "portfolio_age_seconds": 120,
+    "predictions_age_minutes": 15
+  },
+  "memory_usage_mb": 512,
+  "cpu_usage_percent": 23.5
+}
+
+## 20. Notifications (Settings)
+Key: notifications
+Format:
+[
+  {"id": 1, "type": "success", "title": "ML Training Complete", "message": "Model trained with 87% accuracy", "timestamp": "2025-09-13T14:30:00Z", "read": false},
+  {"id": 2, "type": "warning", "title": "Grok API Limit", "message": "Approaching daily API limit", "timestamp": "2025-09-13T14:25:00Z", "read": true},
+  ...
+]
+
+Key: notification_settings
+Format:
+{
+  "ml_completion": true,
+  "grok_completion": true,
+  "error_alerts": true,
+  "performance_warnings": true,
+  "daily_summary": true
+}
