@@ -271,7 +271,7 @@ Key: notification_settings
 ----------------------------------------------
 ## 21. Verbindung (Deployment Hinweis – nicht im Code auslesen!)
 Host: <server-ip>
-Port: 6379
+Port: 6380
 Passwort: pass123
 
 Security Hinweis: Zugangsdaten nicht im Repo in Klartext halten – env / secrets nutzen.
