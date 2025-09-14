@@ -42,8 +42,7 @@ int main(int argc, char *argv[]) {
     QString password = env.value("REDIS_PASSWORD", parser.value(passOpt));
     bool perfLogging = env.value("PERF_LOG", parser.isSet(perfOpt)?"1":"0") == "1";
 
-    // Temporär auskommentiert für QML Debug
-    /*
+    // Redis Models reaktiviert für echte Daten
     MarketModel marketModel;
     PortfolioModel portfolioModel;
     OrdersModel ordersModel;
@@ -58,11 +57,9 @@ int main(int argc, char *argv[]) {
     poller.setPredictionsModel(&predictionsModel);
     poller.setPerformanceLogging(perfLogging);
     poller.start();
-    */
 
     QQmlApplicationEngine engine;
-    // Context Properties temporär auskommentiert
-    /*
+    // Context Properties für echte Redis-Daten
     engine.rootContext()->setContextProperty("marketModel", &marketModel);
     engine.rootContext()->setContextProperty("portfolioModel", &portfolioModel);
     engine.rootContext()->setContextProperty("ordersModel", &ordersModel);
@@ -70,8 +67,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("notificationsModel", &notificationsModel);
     engine.rootContext()->setContextProperty("chartDataModel", &chartDataModel);
     engine.rootContext()->setContextProperty("predictionsModel", &predictionsModel);
-    engine.rootContext()->setContextProperty("poller", &poller);
-    */ 
+    engine.rootContext()->setContextProperty("poller", &poller); 
 
     // QML Logging für Diagnose
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &ctx, const QString &msg){

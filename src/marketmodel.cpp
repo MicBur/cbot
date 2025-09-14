@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QJsonValueRef>
+#include <QDebug>
 #include <unordered_set>
 
 MarketModel::MarketModel(QObject* parent) : QAbstractListModel(parent) {}
@@ -36,10 +37,32 @@ QHash<int, QByteArray> MarketModel::roleNames() const {
 }
 
 void MarketModel::updateFromJson(const QByteArray& jsonBytes) {
+    // Erst versuchen, als JSON zu parsen
     QJsonParseError err{};
     auto doc = QJsonDocument::fromJson(jsonBytes, &err);
-    if (err.error != QJsonParseError::NoError || !doc.isObject()) return;
-    updateFromMap(doc.object());
+    if (err.error == QJsonParseError::NoError && doc.isObject()) {
+        // Erfolgreich als JSON geparst
+        updateFromMap(doc.object());
+        return;
+    }
+    
+    // Falls JSON-Parsing fehlschlägt, versuche Python-Dict Format zu konvertieren
+    QString dataStr = QString::fromUtf8(jsonBytes);
+    if (dataStr.startsWith("{'") || dataStr.startsWith("{\"")) {
+        // Python-Dict Format: Ersetze Single Quotes mit Double Quotes für JSON
+        QString jsonStr = dataStr;
+        jsonStr.replace("'", "\"");
+        
+        // Versuche nochmal als JSON zu parsen
+        auto docRetry = QJsonDocument::fromJson(jsonStr.toUtf8(), &err);
+        if (err.error == QJsonParseError::NoError && docRetry.isObject()) {
+            updateFromMap(docRetry.object());
+            return;
+        }
+    }
+    
+    // Falls beide Versuche fehlschlagen, gib Debug-Info aus
+    qDebug() << "MarketModel: Failed to parse data format:" << dataStr.left(100) << "...";
 }
 
 void MarketModel::updateFromMap(const QJsonObject& rootObj) {

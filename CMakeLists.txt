@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(QtTradeFrontend VERSION 0.2.0 LANGUAGES CXX)
+project(QtTradeFrontend VERSION 0.6.0 LANGUAGES CXX)
 
 # QML Language Server Konfig (Editor Autocomplete / weniger Warnungen)
 set(QT_QML_GENERATE_QMLLS_INI ON)

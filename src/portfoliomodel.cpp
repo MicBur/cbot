@@ -30,9 +30,24 @@ void PortfolioModel::updateFromJson(const QByteArray& jsonBytes) {
     QVector<PortfolioPosition> newRows; newRows.reserve(arr.size());
     for (auto v : arr) {
         if (!v.isObject()) continue; auto o = v.toObject();
-        PortfolioPosition p; p.ticker = o.value("ticker").toString();
-        p.qty = o.value("qty").toDouble();
-        p.avgPrice = o.value("avg_price").toDouble();
+        PortfolioPosition p; 
+        // Unterstütze sowohl 'ticker' als auch 'symbol' für Kompatibilität
+        p.ticker = o.value("ticker").toString();
+        if (p.ticker.isEmpty()) p.ticker = o.value("symbol").toString();
+        
+        // Konvertiere String-Werte zu Zahlen (JSON aus Worker kann String-Format haben)
+        QJsonValue qtyVal = o.value("qty");
+        p.qty = qtyVal.isString() ? qtyVal.toString().toDouble() : qtyVal.toDouble();
+        
+        // Unterstütze sowohl 'avg_price' als auch 'avg_entry_price'
+        QJsonValue avgPriceVal = o.value("avg_price");
+        if (!avgPriceVal.isUndefined()) {
+            p.avgPrice = avgPriceVal.isString() ? avgPriceVal.toString().toDouble() : avgPriceVal.toDouble();
+        } else {
+            QJsonValue entryPriceVal = o.value("avg_entry_price");
+            p.avgPrice = entryPriceVal.isString() ? entryPriceVal.toString().toDouble() : entryPriceVal.toDouble();
+        }
+        
         p.side = o.value("side").toString();
         newRows.push_back(p);
     }

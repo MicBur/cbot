@@ -16,7 +16,7 @@ $BinDir = Join-Path $BuildDir $Configuration
 $ExePath = Join-Path $BinDir 'QtTradeFrontend.exe'
 $HiredisDll = Join-Path $BuildDir 'hiredis-1.3.0' | Join-Path -ChildPath $Configuration | Join-Path -ChildPath 'hiredis.dll'
 $DeployTool = Join-Path $QtRoot 'bin/windeployqt.exe'
-$Version = '0.0.0'
+$Version = '0.7.0'
 $CacheFile = Join-Path $BuildDir 'CMakeCache.txt'
 if (Test-Path $CacheFile) {
     $verLine = Select-String -Path $CacheFile -Pattern '^QtTradeFrontend_VERSION:' -ErrorAction SilentlyContinue
