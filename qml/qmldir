@@ -1,0 +1,6 @@
+module Frontend
+singleton Theme 1.0 Theme.qml
+MainStep1 1.0 MainStep1.qml
+MainStep2 1.0 MainStep2.qml
+MainStep3 1.0 MainStep3.qml
+Main 1.0 Main.qml
