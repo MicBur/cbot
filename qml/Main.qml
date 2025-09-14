@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
 import Frontend 1.0
 
 ApplicationWindow {
@@ -118,14 +119,19 @@ ApplicationWindow {
         anchors.top: topBar.bottom
         anchors.bottom: parent.bottom
         anchors.right: parent.right
+        anchors.rightMargin: drawerState === 1 ? 0 : -width
         color: Theme.bgElevated
         border.color: Theme.accentAlt
         border.width: 1
         radius: 0
-        visible: drawerState === 1
-        opacity: drawerState === 1 ? 1 : 0
+        visible: anchors.rightMargin > -width
         property int drawerState: 0 // 0 hidden,1 shown
-        Behavior on opacity { NumberAnimation { duration: Theme.durMed } }
+        Behavior on anchors.rightMargin { 
+            NumberAnimation { 
+                duration: Theme.durMed 
+                easing.type: Easing.OutCubic 
+            } 
+        }
         ColumnLayout { anchors.fill: parent; spacing: 4; padding: 6
             RowLayout {
                 Label { text: "Notifications"; color: Theme.accent; font.bold: true; font.pixelSize: 18 }
@@ -163,7 +169,14 @@ ApplicationWindow {
         Text { anchors.centerIn: parent; text: notificationDrawer.drawerState === 1 ? "×" : "🔔"; color: Theme.bg; font.pixelSize: 20 }
         MouseArea { anchors.fill: parent; onClicked: notificationDrawer.drawerState = notificationDrawer.drawerState === 1 ? 0 : 1 }
         Behavior on color { ColorAnimation { duration: Theme.durMed } }
-        dropShadow: DropShadow {}
+        layer.enabled: true
+        layer.effect: DropShadow {
+            radius: 8
+            samples: 16
+            color: "#80000000"
+            horizontalOffset: 2
+            verticalOffset: 2
+        }
     }
 
     // Error Overlay (Redis Down or System Down) - simple initial version

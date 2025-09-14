@@ -19,6 +19,7 @@ Item {
     property int maxCandles: 120
     property string currentTicker: poller ? poller.currentSymbol : "AAPL"
     property bool useMock: candles.length === 0
+    property real forecastOpacity: 0.85
 
     // Neue Properties für echte Modelle
     property var modelCandles: chartDataModel // ChartDataModel aus Context
@@ -89,6 +90,7 @@ Item {
         anchors.fill: parent
         onPaint: {
             var ctx = getContext("2d");
+            if (!ctx) return; // Safety check
             ctx.reset();
             ctx.fillStyle = Theme.bgElevated;
             ctx.fillRect(0,0,width,height);

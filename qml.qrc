@@ -7,5 +7,7 @@
     <file>qml/components/MarketList.qml</file>
     <file>qml/components/StatusBadge.qml</file>
     <file>qml/components/CandleChart.qml</file>
+    <file>qml/components/ResponsiveHelper.qml</file>
+    <file>qml/components/KeyboardNavigation.qml</file>
   </qresource>
 </RCC>
