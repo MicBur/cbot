@@ -38,7 +38,7 @@
 - **Paper Trading**: Safe testing environment
 - **Live Trading**: Production-ready execution via Alpaca
 
-### Installation & Setup
+### Installation & Setup (Docker)
 
 #### Prerequisites
 ```bash
@@ -51,31 +51,35 @@ sudo apt install git
 
 #### Environment Setup
 ```bash
-# Clone repository
-git clone https://github.com/MicBur/cbot.git
-cd cbot
-
 # Create environment file
 cp .env.example .env
 
-# Configure API keys in .env
-FINNHUB_API_KEY=your_finnhub_key
-ALPACA_API_KEY=your_alpaca_key
-ALPACA_SECRET=your_alpaca_secret
-XAI_API_KEY=your_xai_key
+# Edit .env and add your API keys
+# FINNHUB_API_KEY=...
+# ALPACA_API_KEY=...
+# ALPACA_SECRET=...
+# XAI_API_KEY=...
 ```
 
 #### Docker Deployment
 ```bash
-# Start all services
-docker-compose up -d
+# Build and start services (Redis, Postgres, worker, beat)
+docker compose up -d --build
 
 # View logs
-docker-compose logs -f worker
+docker compose logs -f worker
 
 # Stop services
-docker-compose down
+docker compose down
 ```
+
+#### Notes
+- Redis image updated to 7.x, Postgres to 15.x (alpine). Volumes `pgdata` and `redisdata` persist data.
+- Celery beat runs as a separate service `beat` for scheduled tasks.
+
+### Local Development (optional)
+- Python 3.11 with requirements in `requirements.txt`.
+- Start worker locally: `export REDIS_URL=... DATABASE_URL=... && celery -A worker worker -l info`.
 
 ### API Endpoints & Data Format
 
@@ -115,7 +119,7 @@ All data is stored in Redis using JSON format for Qt frontend compatibility:
 
 ### Automated Scheduling
 
-**Celery Beat Schedule:**
+**Celery Beat Schedule:** (see `docker-compose.yml`)
 - **Data Fetching**: Every 10 minutes
 - **Portfolio Sync**: Every 5 minutes  
 - **ML Training**: Daily at 09:00 UTC
@@ -163,7 +167,7 @@ redis-cli -a pass123 monitor
 
 ### Security
 
-- API keys stored in environment variables
+- API keys via `.env` only (never hardcode keys in source)
 - Redis password protection
 - PostgreSQL authentication
 - SSL/TLS for external API calls
@@ -202,8 +206,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or issues:
 - Open a GitHub issue
-- Check the [documentation](redis.txt) for Redis endpoints
-- Review [Docker logs](docker-compose.yml) for troubleshooting
+- Check the documentation in `redis.txt` and `ml.md`
+- Review Docker logs with `docker compose logs -f worker`
 
 ---
 

@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS predictions (
 
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_market_data_ticker_time ON market_data(ticker, time);
+-- Ensure uniqueness on (time, ticker) for upserts
+DO $$ BEGIN
+    ALTER TABLE market_data ADD CONSTRAINT uq_market_data_time_ticker UNIQUE (time, ticker);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS idx_predictions_ticker_time ON predictions(ticker, time);
 
 -- Portfolio-Daten
