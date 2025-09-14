@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(QtTradeFrontend VERSION 0.1.0 LANGUAGES CXX)
+project(QtTradeFrontend VERSION 0.2.0 LANGUAGES CXX)
 
 # QML Language Server Konfig (Editor Autocomplete / weniger Warnungen)
 set(QT_QML_GENERATE_QMLLS_INI ON)
@@ -67,6 +67,10 @@ qt_add_qml_module(QtTradeFrontend
     URI Frontend
     VERSION 1.0
     QML_FILES
+        qml/MainSimple.qml
+        qml/MainStep1.qml
+        qml/MainStep2.qml
+        qml/MainStep3.qml
         qml/Main.qml
         qml/Theme.qml
         qml/components/HeaderBar.qml

@@ -13,7 +13,7 @@ Rectangle {
     RowLayout {
         anchors.fill: parent
         spacing: 16
-        Label { id: titleLabel; text: "Title"; color: Theme.accent; font.bold: true; font.pixelSize: 20; padding: 8 }
+        MyLabel { id: titleLabel; text: "Title"; color: Theme.accent; font.bold: true; font.pixelSize: 20 }
         Rectangle { Layout.fillWidth: true; color: "transparent" }
         StatusBadge { status: poller.connected ? 1 : 0; label: poller.connected ? "Redis" : "No Redis" }
     }

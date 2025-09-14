@@ -40,6 +40,26 @@ Write-Host "Starte windeployqt..." -ForegroundColor Yellow
 $QmlDir = Join-Path $ProjectRoot 'qml'
 & $DeployTool --release --qmldir $QmlDir (Join-Path $DistPath 'QtTradeFrontend.exe') | Write-Host
 
+# 4.5 Kopiere eigenes QML Modul
+$FrontendModuleSrc = Join-Path $BuildDir 'Frontend'
+$FrontendModuleDst = Join-Path $DistPath 'qml/Frontend'
+if (Test-Path $FrontendModuleSrc) {
+    Write-Host "Kopiere QML Modul Frontend..." -ForegroundColor Yellow
+    Copy-Item -Recurse $FrontendModuleSrc $FrontendModuleDst
+} else {
+    Write-Warning "QML Modul nicht gefunden: $FrontendModuleSrc"
+}
+
+# 4.6 Kopiere QML Components
+$ComponentsSrc = Join-Path $ProjectRoot 'qml/components'
+$ComponentsDst = Join-Path $DistPath 'qml/components'
+if (Test-Path $ComponentsSrc) {
+    Write-Host "Kopiere QML Components..." -ForegroundColor Yellow
+    Copy-Item -Recurse $ComponentsSrc $ComponentsDst
+} else {
+    Write-Warning "QML Components nicht gefunden: $ComponentsSrc"
+}
+
 # 5. Optional Pruning
 if ($PruneMinimal) {
     Write-Host "Prune: Entferne ungenutzte Styles / Übersetzungen" -ForegroundColor Yellow

@@ -27,7 +27,7 @@ ApplicationWindow {
         RowLayout {
             anchors.fill: parent
             spacing: 16
-            Label { text: "QtTrade"; font.pixelSize: 20; color: Theme.accent }
+            MyLabel { text: "QtTrade"; font.pixelSize: 20; color: Theme.accent }
             Rectangle { Layout.fillWidth: true; color: "transparent" }
             // Ersetze einzelne Redis Badge durch mehrere Status Badges
             RowLayout {
@@ -38,7 +38,7 @@ ApplicationWindow {
                 StatusBadge { status: statusModel && statusModel.alpacaApiActive ? 1 : 0; label: statusModel && statusModel.alpacaApiActive ? "Alpaca" : "Alpaca" }
                 StatusBadge { status: statusModel && statusModel.grokApiActive ? 1 : 0; label: statusModel && statusModel.grokApiActive ? "Grok" : "Grok" }
             }
-            Label { text: Qt.formatTime(new Date(), "HH:mm:ss"); color: Theme.text; font.family: "Consolas" }
+            MyLabel { text: Qt.formatTime(new Date(), "HH:mm:ss"); color: Theme.text; font.family: "Consolas" }
             Timer { interval: 1000; running: true; repeat: true; onTriggered: topBar.forceLayout() }
         }
     }
@@ -63,7 +63,7 @@ ApplicationWindow {
         // Dashboard Page
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                Label { text: "Market"; color: Theme.text; font.bold: true; font.pixelSize: 18; padding: 8 }
+                MyLabel { text: "Market"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
                 MarketList { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
@@ -71,14 +71,14 @@ ApplicationWindow {
         // Charts page replaced with CandleChart component
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                Label { text: "Charts"; color: Theme.text; font.bold: true; font.pixelSize: 18; padding: 8 }
+                MyLabel { text: "Charts"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
                 CandleChart { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
         // Portfolio view
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                Label { text: "Portfolio"; color: Theme.text; font.bold: true; font.pixelSize: 18; padding: 8 }
+                MyLabel { text: "Portfolio"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
                 ListView { Layout.fillWidth: true; Layout.fillHeight: true; model: portfolioModel; clip: true
                     delegate: Rectangle {
                         width: ListView.view.width; height: 40; color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
@@ -96,7 +96,7 @@ ApplicationWindow {
         // Orders view
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                Label { text: "Orders"; color: Theme.text; font.bold: true; font.pixelSize: 18; padding: 8 }
+                MyLabel { text: "Orders"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
                 ListView { Layout.fillWidth: true; Layout.fillHeight: true; model: ordersModel; clip: true
                     delegate: Rectangle {
                         width: ListView.view.width; height: 42; color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
@@ -131,9 +131,9 @@ ApplicationWindow {
         opacity: drawerState === 1 ? 1 : 0
         property int drawerState: 0 // 0 hidden,1 shown
         Behavior on opacity { NumberAnimation { duration: Theme.durMed } }
-        ColumnLayout { anchors.fill: parent; spacing: 4; padding: 6
+        ColumnLayout { anchors.fill: parent; anchors.margins: 6; spacing: 4
             RowLayout {
-                Label { text: "Notifications"; color: Theme.accent; font.bold: true; font.pixelSize: 18 }
+                MyLabel { text: "Notifications"; color: Theme.accent; font.bold: true; font.pixelSize: 18 }
                 Rectangle { Layout.fillWidth: true; color: "transparent" }
                 Button { text: "×"; onClicked: notificationDrawer.drawerState = 0 }
             }

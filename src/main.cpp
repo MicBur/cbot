@@ -6,6 +6,7 @@
 #include <QCommandLineOption>
 #include <QByteArray>
 #include <QProcessEnvironment>
+#include <QTimer>
 
 #include "marketmodel.h"
 #include "datapoller.h"
@@ -41,6 +42,8 @@ int main(int argc, char *argv[]) {
     QString password = env.value("REDIS_PASSWORD", parser.value(passOpt));
     bool perfLogging = env.value("PERF_LOG", parser.isSet(perfOpt)?"1":"0") == "1";
 
+    // Temporär auskommentiert für QML Debug
+    /*
     MarketModel marketModel;
     PortfolioModel portfolioModel;
     OrdersModel ordersModel;
@@ -55,8 +58,11 @@ int main(int argc, char *argv[]) {
     poller.setPredictionsModel(&predictionsModel);
     poller.setPerformanceLogging(perfLogging);
     poller.start();
+    */
 
     QQmlApplicationEngine engine;
+    // Context Properties temporär auskommentiert
+    /*
     engine.rootContext()->setContextProperty("marketModel", &marketModel);
     engine.rootContext()->setContextProperty("portfolioModel", &portfolioModel);
     engine.rootContext()->setContextProperty("ordersModel", &ordersModel);
@@ -65,27 +71,37 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("chartDataModel", &chartDataModel);
     engine.rootContext()->setContextProperty("predictionsModel", &predictionsModel);
     engine.rootContext()->setContextProperty("poller", &poller);
+    */ 
 
     // QML Logging für Diagnose
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &ctx, const QString &msg){
         if(type == QtFatalMsg) {
             qCritical() << "FATAL:" << msg;
-            abort();
+            QTimer::singleShot(3000, []() { abort(); });
         } else if(type == QtCriticalMsg) {
-            qCritical() << msg;
+            qCritical() << "CRITICAL:" << msg;
         } else if(type == QtWarningMsg) {
-            qWarning() << msg;
+            qWarning() << "WARNING:" << msg;
         } else {
-            qDebug() << msg;
+            qDebug() << "DEBUG:" << msg;
         }
     });
 
-    // Laden über QML Modul (URI Frontend, Version 1.0) statt direkter qrc URL
-    engine.loadFromModule(u"Frontend", u"Main");
+    qDebug() << "=== QtTradeFrontend startet ===";
+    qDebug() << "Qt Version:" << QT_VERSION_STR;
+    qDebug() << "Lade QML Modul Frontend/MainStep3...";
+
+    // Laden über QML Modul (URI Frontend, Version 1.0) - MainStep3 für Main.qml ohne DropShadow
+    engine.loadFromModule(u"Frontend", u"MainStep3");
     if(engine.rootObjects().isEmpty()) {
-        qCritical() << "Keine Root QML geladen (Frontend/Main)";
-        return -1;
+        qCritical() << "FEHLER: Keine Root QML geladen (Frontend/MainStep3)";
+        qCritical() << "Verfügbare QML Module:";
+        // Debug: 3 Sekunden warten bevor Exit damit Fehler sichtbar wird
+        QTimer::singleShot(3000, [](){ qApp->exit(-1); });
+        return app.exec();
     }
+    
+    qDebug() << "QML erfolgreich geladen, Root Objects:" << engine.rootObjects().size();
 
     return app.exec();
 }
