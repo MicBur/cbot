@@ -5,7 +5,7 @@
 
 ## Überblick
 Aktuelles Setup:
-- Lokaler Redis-Slave (127.0.0.1:6380) repliziert von Remote Redis (<server-ip>:6379, Passwort: pass123).
+- Lokaler Redis-Slave (127.0.0.1:6380) repliziert von Remote Redis (<server-ip>:6380, Passwort: pass123).
 - Frontend (Qt Quick/C++) pollt Keys wie `market_data`, `chart_data_<SYMBOL>`, `predictions_<SYMBOL>` alle 5s mit exponentiellem Backoff (5s→30s).
 - Backend schreibt atomar in Redis-Keys (siehe Schema v1.1).
 
