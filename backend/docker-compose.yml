@@ -1,0 +1,85 @@
+version: "3.9"
+name: qttrade-backend
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-market}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  fmp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fetch-fmp
+    command: ["python", "fetch_fmp.py"]
+    env_file: .env
+    environment:
+      ENABLE_POSTGRES: ${ENABLE_POSTGRES:-1}
+    depends_on:
+      - redis
+      - postgres
+
+  finnhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fetch-finnhub
+    command: ["python", "fetch_finnhub.py"]
+    env_file: .env
+    environment:
+      ENABLE_POSTGRES: ${ENABLE_POSTGRES:-1}
+    depends_on:
+      - redis
+      - postgres
+
+  yfinance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fetch-yfinance
+    command: ["python", "fetch_yfinance.py"]
+    env_file: .env
+    environment:
+      ENABLE_POSTGRES: ${ENABLE_POSTGRES:-1}
+    depends_on:
+      - redis
+      - postgres
+
+  ml_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-worker
+    command: ["python", "../backend/ml_worker.py"]
+    env_file: .env
+    depends_on:
+      - redis
+
+  trading_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trading-bot
+    command: ["python", "../backend/trading_bot.py"]
+    env_file: .env
+    depends_on:
+      - redis
+
+volumes:
+  pgdata: {}
+
