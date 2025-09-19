@@ -76,8 +76,12 @@ qt_add_qml_module(QtTradeFrontend
         qml/components/HeaderBar.qml
         qml/components/SideNav.qml
         qml/components/MarketList.qml
+        qml/components/MarketListEnhanced.qml
         qml/components/StatusBadge.qml
         qml/components/CandleChart.qml
+        qml/components/CandleChart3D.qml
+        qml/components/Portfolio3D.qml
+        qml/components/AnimatedCard.qml
 )
 
 # --- kleines Testprogramm für Redis Ping ---
