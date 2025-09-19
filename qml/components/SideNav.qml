@@ -20,10 +20,10 @@ Rectangle {
     ListModel {
         id: navModel
         ListElement { icon: "🏠"; label: "Dashboard" }
-        ListElement { icon: "📊"; label: "Charts" }
+        ListElement { icon: "📈"; label: "Signals" }
         ListElement { icon: "💼"; label: "Portfolio" }
-        ListElement { icon: "📝"; label: "Trades" }
-        ListElement { icon: "⚙️"; label: "Settings" }
+        ListElement { icon: "🤖"; label: "AI Analysis" }
+        ListElement { icon: "📝"; label: "Orders" }
     }
 
     ColumnLayout {

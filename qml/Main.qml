@@ -128,11 +128,11 @@ ApplicationWindow {
             }
         }
 
-        // Charts page replaced with CandleChart component
+        // Charts page with Trading Signals
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                MyLabel { text: "Charts"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                CandleChart3D { Layout.fillWidth: true; Layout.fillHeight: true }
+                MyLabel { text: "Trading Signals & 7-Day Forecast"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
+                TradingSignalsChart { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
         // Portfolio view with 3D visualization
@@ -142,27 +142,129 @@ ApplicationWindow {
                 Portfolio3D { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
-        // Orders view
+        // Grok AI Analysis
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                MyLabel { text: "Orders"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                ListView { Layout.fillWidth: true; Layout.fillHeight: true; model: ordersModel; clip: true
-                    delegate: Rectangle {
-                        width: ListView.view.width; height: 42; color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
-                        RowLayout { anchors.fill: parent; spacing: 10
-                            Text { text: ticker; width: 80; color: Theme.text }
-                            Text { text: side; width: 50; color: side === "buy" ? Theme.success : Theme.danger }
-                            Text { text: Number(price).toFixed(2); width: 80; color: Theme.text }
-                            Text { text: status; width: 90; color: status === "filled" ? Theme.success : (status === "cancelled" ? Theme.danger : Theme.textDim) }
-                            Text { text: timestamp; width: 160; color: Theme.textDim; font.pixelSize: 11 }
-                            Rectangle { Layout.fillWidth: true; color: "transparent" }
+                GrokSuggestions { Layout.fillWidth: true; Layout.fillHeight: true }
+            }
+        }
+        // Orders & Bot Actions view
+        Item {
+            ColumnLayout { anchors.fill: parent; spacing: 0
+                MyLabel { text: "Orders & Bot Actions"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
+                
+                // Tab bar for switching between orders and bot actions
+                TabBar {
+                    id: ordersTabBar
+                    Layout.fillWidth: true
+                    currentIndex: 0
+                    
+                    TabButton { text: "Active Orders" }
+                    TabButton { text: "Bot Actions" }
+                }
+                
+                StackLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    currentIndex: ordersTabBar.currentIndex
+                    
+                    // Active orders list
+                    ListView {
+                        model: ordersModel
+                        clip: true
+                        delegate: Rectangle {
+                            width: ListView.view.width; height: 42
+                            color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 10
+                                Text { text: ticker; width: 80; color: Theme.text }
+                                Text { text: side; width: 50; color: side === "buy" ? Theme.success : Theme.danger }
+                                Text { text: "$" + Number(price).toFixed(2); width: 80; color: Theme.text }
+                                Text { text: status; width: 90; color: status === "filled" ? Theme.success : (status === "cancelled" ? Theme.danger : Theme.textDim) }
+                                Text { text: timestamp; width: 160; color: Theme.textDim; font.pixelSize: 11 }
+                                Rectangle { Layout.fillWidth: true; color: "transparent" }
+                            }
+                        }
+                    }
+                    
+                    // Bot actions list
+                    ListView {
+                        model: botActionsModel
+                        clip: true
+                        delegate: Rectangle {
+                            width: ListView.view.width
+                            height: 80
+                            color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
+                            border.color: action === "BUY" ? Theme.success : Theme.danger
+                            border.width: 1
+                            radius: Theme.radiusSmall
+                            
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 6
+                                
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    
+                                    Text {
+                                        text: symbol
+                                        color: Theme.text
+                                        font.pixelSize: 16
+                                        font.bold: true
+                                    }
+                                    
+                                    Rectangle {
+                                        width: 60
+                                        height: 24
+                                        radius: 12
+                                        color: action === "BUY" ? Theme.success : Theme.danger
+                                        
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: action
+                                            color: Theme.bg
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                        }
+                                    }
+                                    
+                                    Text {
+                                        text: quantity + " shares @ $" + Number(price).toFixed(2)
+                                        color: Theme.text
+                                        font.pixelSize: 14
+                                    }
+                                    
+                                    Item { Layout.fillWidth: true }
+                                    
+                                    Text {
+                                        text: "Conf: " + (confidence * 100).toFixed(0) + "%"
+                                        color: Theme.accent
+                                        font.pixelSize: 12
+                                    }
+                                }
+                                
+                                Text {
+                                    text: reasons ? reasons.join(" • ") : ""
+                                    color: Theme.textDim
+                                    font.pixelSize: 11
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+                                
+                                Text {
+                                    text: timestamp
+                                    color: Theme.textDim
+                                    font.pixelSize: 10
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        // Settings placeholder (will hold notifications button)
-        Item { Text { anchors.centerIn: parent; text: "Settings (coming)"; color: Theme.text } }
     }
 
     // Notification Drawer

@@ -82,6 +82,8 @@ qt_add_qml_module(QtTradeFrontend
         qml/components/CandleChart3D.qml
         qml/components/Portfolio3D.qml
         qml/components/AnimatedCard.qml
+        qml/components/GrokSuggestions.qml
+        qml/components/TradingSignalsChart.qml
 )
 
 # --- kleines Testprogramm für Redis Ping ---
