@@ -1,0 +1,18 @@
+redis==5.0.8
+orjson==3.10.7
+requests==2.32.3
+python-dotenv==1.0.1
+tenacity==8.3.0
+schedule==1.2.1
+
+# Data / ML (base workers)
+pandas==2.2.2
+numpy==1.26.4
+
+# Trading
+alpaca-trade-api==3.2.0
+
+# Postgres
+SQLAlchemy==2.0.31
+psycopg2-binary==2.9.9
+
