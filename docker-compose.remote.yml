@@ -1,0 +1,145 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: qt_trade_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # Exposed on 6380 to avoid conflicts
+    environment:
+      - REDIS_PASSWORD=pass123
+    command: redis-server --requirepass pass123
+    volumes:
+      - redis_data:/data
+    networks:
+      - qt_trade_network
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: qt_trade_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=qt_trade
+      - POSTGRES_USER=qt_user
+      - POSTGRES_PASSWORD=pass123
+    ports:
+      - "5433:5432"  # Exposed on 5433 to avoid conflicts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - qt_trade_network
+
+  ml_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml_worker
+    container_name: qt_trade_ml_worker
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=pass123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=qt_trade
+      - POSTGRES_USER=qt_user
+      - POSTGRES_PASSWORD=pass123
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+    volumes:
+      - ./ml_models:/app/ml_models
+      - ./logs:/app/logs
+    networks:
+      - qt_trade_network
+
+  trading_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading_bot
+    container_name: qt_trade_bot
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - ml_worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=pass123
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - BOT_MODE=paper  # paper or live
+      - CHECK_INTERVAL=300  # 5 minutes in seconds
+    networks:
+      - qt_trade_network
+
+  data_fetcher:
+    build:
+      context: .
+      dockerfile: Dockerfile.data_fetcher
+    container_name: qt_trade_data_fetcher
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=pass123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=qt_trade
+      - POSTGRES_USER=qt_user
+      - POSTGRES_PASSWORD=pass123
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - FETCH_INTERVAL=300  # 5 minutes
+    networks:
+      - qt_trade_network
+
+  grok_analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile.grok
+    container_name: qt_trade_grok
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=pass123
+      - GROK_API_KEY=${GROK_API_KEY}
+      - ANALYSIS_INTERVAL=3600  # 1 hour
+    networks:
+      - qt_trade_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: qt_trade_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - redis
+    networks:
+      - qt_trade_network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  qt_trade_network:
+    driver: bridge

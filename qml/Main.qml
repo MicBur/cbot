@@ -5,29 +5,89 @@ import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Particles 2.15
 
 import Frontend 1.0
 
 ApplicationWindow {
     id: root
-    width: 1280
-    height: 800
+    width: 1400
+    height: 900
     visible: true
-    title: "Qt Trade Frontend"
+    title: "Qt Trade Frontend - Dark 3D Edition"
     color: Theme.bg
 
     property bool redisConnected: poller.connected
 
-    Rectangle { // top bar
+    // Particle background effect
+    ParticleSystem {
+        id: particleSystem
+        anchors.fill: parent
+    }
+
+    Emitter {
+        system: particleSystem
+        anchors.fill: parent
+        emitRate: 0.5
+        lifeSpan: 15000
+        size: 4
+        sizeVariation: 2
+        velocity: AngleDirection {
+            angle: -90
+            angleVariation: 30
+            magnitude: 20
+            magnitudeVariation: 10
+        }
+    }
+
+    ItemParticle {
+        system: particleSystem
+        delegate: Rectangle {
+            width: 4
+            height: 4
+            radius: 2
+            color: Theme.accent
+            opacity: 0.3
+            
+            SequentialAnimation on opacity {
+                loops: Animation.Infinite
+                NumberAnimation { from: 0; to: 0.3; duration: 3000 }
+                NumberAnimation { from: 0.3; to: 0; duration: 3000 }
+            }
+        }
+    }
+
+    Rectangle { // top bar with glass effect
         id: topBar
         anchors.top: parent.top
-        height: 48
+        height: 60
         width: parent.width
         color: Theme.bgElevated
+        
+        // Glass morphism
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.bgGlass
+            border.color: Theme.border
+            border.width: 1
+        }
         RowLayout {
             anchors.fill: parent
             spacing: 16
-            MyLabel { text: "QtTrade"; font.pixelSize: 20; color: Theme.accent }
+            MyLabel { 
+                text: "QtTrade 3D" 
+                font.pixelSize: 24
+                font.bold: true
+                color: Theme.accent
+                
+                layer.enabled: true
+                layer.effect: Glow {
+                    radius: 8
+                    color: Theme.accentGlow
+                    samples: 16
+                    spread: 0.3
+                }
+            }
             Rectangle { Layout.fillWidth: true; color: "transparent" }
             // Ersetze einzelne Redis Badge durch mehrere Status Badges
             RowLayout {
@@ -64,56 +124,147 @@ ApplicationWindow {
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
                 MyLabel { text: "Market"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                MarketList { Layout.fillWidth: true; Layout.fillHeight: true }
+                MarketListEnhanced { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
 
-        // Charts page replaced with CandleChart component
+        // Charts page with Trading Signals
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                MyLabel { text: "Charts"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                CandleChart { Layout.fillWidth: true; Layout.fillHeight: true }
+                MyLabel { text: "Trading Signals & 7-Day Forecast"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
+                TradingSignalsChart { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
-        // Portfolio view
+        // Portfolio view with 3D visualization
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
                 MyLabel { text: "Portfolio"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                ListView { Layout.fillWidth: true; Layout.fillHeight: true; model: portfolioModel; clip: true
-                    delegate: Rectangle {
-                        width: ListView.view.width; height: 40; color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
-                        RowLayout { anchors.fill: parent; spacing: 12
-                            Text { text: ticker; width: 90; color: Theme.text }
-                            Text { text: Number(qty).toFixed(2); width: 80; color: Theme.text }
-                            Text { text: Number(avgPrice).toFixed(2); width: 90; color: Theme.text }
-                            Text { text: side; width: 60; color: side === "short" ? Theme.danger : Theme.success }
-                            Rectangle { Layout.fillWidth: true; color: "transparent" }
-                        }
-                    }
-                }
+                Portfolio3D { Layout.fillWidth: true; Layout.fillHeight: true }
             }
         }
-        // Orders view
+        // Grok AI Analysis
         Item {
             ColumnLayout { anchors.fill: parent; spacing: 0
-                MyLabel { text: "Orders"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
-                ListView { Layout.fillWidth: true; Layout.fillHeight: true; model: ordersModel; clip: true
-                    delegate: Rectangle {
-                        width: ListView.view.width; height: 42; color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
-                        RowLayout { anchors.fill: parent; spacing: 10
-                            Text { text: ticker; width: 80; color: Theme.text }
-                            Text { text: side; width: 50; color: side === "buy" ? Theme.success : Theme.danger }
-                            Text { text: Number(price).toFixed(2); width: 80; color: Theme.text }
-                            Text { text: status; width: 90; color: status === "filled" ? Theme.success : (status === "cancelled" ? Theme.danger : Theme.textDim) }
-                            Text { text: timestamp; width: 160; color: Theme.textDim; font.pixelSize: 11 }
-                            Rectangle { Layout.fillWidth: true; color: "transparent" }
+                GrokSuggestions { Layout.fillWidth: true; Layout.fillHeight: true }
+            }
+        }
+        // Orders & Bot Actions view
+        Item {
+            ColumnLayout { anchors.fill: parent; spacing: 0
+                MyLabel { text: "Orders & Bot Actions"; color: Theme.text; font.bold: true; font.pixelSize: 18 }
+                
+                // Tab bar for switching between orders and bot actions
+                TabBar {
+                    id: ordersTabBar
+                    Layout.fillWidth: true
+                    currentIndex: 0
+                    
+                    TabButton { text: "Active Orders" }
+                    TabButton { text: "Bot Actions" }
+                }
+                
+                StackLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    currentIndex: ordersTabBar.currentIndex
+                    
+                    // Active orders list
+                    ListView {
+                        model: ordersModel
+                        clip: true
+                        delegate: Rectangle {
+                            width: ListView.view.width; height: 42
+                            color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 10
+                                Text { text: ticker; width: 80; color: Theme.text }
+                                Text { text: side; width: 50; color: side === "buy" ? Theme.success : Theme.danger }
+                                Text { text: "$" + Number(price).toFixed(2); width: 80; color: Theme.text }
+                                Text { text: status; width: 90; color: status === "filled" ? Theme.success : (status === "cancelled" ? Theme.danger : Theme.textDim) }
+                                Text { text: timestamp; width: 160; color: Theme.textDim; font.pixelSize: 11 }
+                                Rectangle { Layout.fillWidth: true; color: "transparent" }
+                            }
+                        }
+                    }
+                    
+                    // Bot actions list
+                    ListView {
+                        model: botActionsModel
+                        clip: true
+                        delegate: Rectangle {
+                            width: ListView.view.width
+                            height: 80
+                            color: index % 2 === 0 ? Theme.bgElevated : Theme.bg
+                            border.color: action === "BUY" ? Theme.success : Theme.danger
+                            border.width: 1
+                            radius: Theme.radiusSmall
+                            
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                spacing: 6
+                                
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    
+                                    Text {
+                                        text: symbol
+                                        color: Theme.text
+                                        font.pixelSize: 16
+                                        font.bold: true
+                                    }
+                                    
+                                    Rectangle {
+                                        width: 60
+                                        height: 24
+                                        radius: 12
+                                        color: action === "BUY" ? Theme.success : Theme.danger
+                                        
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: action
+                                            color: Theme.bg
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                        }
+                                    }
+                                    
+                                    Text {
+                                        text: quantity + " shares @ $" + Number(price).toFixed(2)
+                                        color: Theme.text
+                                        font.pixelSize: 14
+                                    }
+                                    
+                                    Item { Layout.fillWidth: true }
+                                    
+                                    Text {
+                                        text: "Conf: " + (confidence * 100).toFixed(0) + "%"
+                                        color: Theme.accent
+                                        font.pixelSize: 12
+                                    }
+                                }
+                                
+                                Text {
+                                    text: reasons ? reasons.join(" • ") : ""
+                                    color: Theme.textDim
+                                    font.pixelSize: 11
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+                                
+                                Text {
+                                    text: timestamp
+                                    color: Theme.textDim
+                                    font.pixelSize: 10
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        // Settings placeholder (will hold notifications button)
-        Item { Text { anchors.centerIn: parent; text: "Settings (coming)"; color: Theme.text } }
     }
 
     // Notification Drawer
