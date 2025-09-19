@@ -17,18 +17,23 @@ logger = logging.getLogger(__name__)
 class TradingBot:
     def __init__(self):
         self.redis_client = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'localhost'),
+            host=os.getenv('REDIS_HOST', 'redis'),
             port=int(os.getenv('REDIS_PORT', 6379)),
-            password=os.getenv('REDIS_PASSWORD', 'pass123'),
+            password=os.getenv('REDIS_PASSWORD') or None,
             decode_responses=True
         )
         
         # Alpaca API
-        self.alpaca = REST(
-            os.getenv('ALPACA_API_KEY'),
-            os.getenv('ALPACA_SECRET_KEY'),
-            base_url='https://paper-api.alpaca.markets' if os.getenv('BOT_MODE') == 'paper' else 'https://api.alpaca.markets'
-        )
+        try:
+            self.alpaca = REST(
+                os.getenv('ALPACA_API_KEY'),
+                os.getenv('ALPACA_SECRET_KEY'),
+                base_url='https://paper-api.alpaca.markets' if os.getenv('BOT_MODE', 'paper') == 'paper' else 'https://api.alpaca.markets'
+            )
+            # Signal API availability for frontend status
+            self.redis_client.set('api_status', 'valid')
+        except Exception:
+            self.redis_client.set('api_status', 'invalid')
         
         self.symbols = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN', 'META', 'GOOGL']
         self.positions = {}
