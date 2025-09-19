@@ -155,6 +155,94 @@ public slots:
         return QStringList();
 #endif
     }
+    
+    bool set(const QString &key, const QString &value) {
+#ifdef HIREDIS_AVAILABLE
+        if (!m_context) return false;
+        
+        redisReply *reply = (redisReply*)redisCommand(m_context, "SET %s %s", 
+                                                     key.toUtf8().data(), 
+                                                     value.toUtf8().data());
+        if (!reply) return false;
+        
+        bool success = (reply->type == REDIS_REPLY_STATUS && 
+                       QString::fromUtf8(reply->str) == "OK");
+        
+        freeReplyObject(reply);
+        return success;
+#else
+        Q_UNUSED(key)
+        Q_UNUSED(value)
+        return false;
+#endif
+    }
+    
+    bool hset(const QString &key, const QString &field, const QString &value) {
+#ifdef HIREDIS_AVAILABLE
+        if (!m_context) return false;
+        
+        redisReply *reply = (redisReply*)redisCommand(m_context, "HSET %s %s %s", 
+                                                     key.toUtf8().data(),
+                                                     field.toUtf8().data(),
+                                                     value.toUtf8().data());
+        if (!reply) return false;
+        
+        bool success = (reply->type == REDIS_REPLY_INTEGER);
+        
+        freeReplyObject(reply);
+        return success;
+#else
+        Q_UNUSED(key)
+        Q_UNUSED(field)
+        Q_UNUSED(value)
+        return false;
+#endif
+    }
+    
+    bool ping() {
+#ifdef HIREDIS_AVAILABLE
+        if (!m_context) return false;
+        
+        redisReply *reply = (redisReply*)redisCommand(m_context, "PING");
+        if (!reply) return false;
+        
+        bool success = (reply->type == REDIS_REPLY_STATUS && 
+                       QString::fromUtf8(reply->str) == "PONG");
+        
+        freeReplyObject(reply);
+        return success;
+#else
+        return false;
+#endif
+    }
+    
+    QVariantList lrange(const QString &key, int start = 0, int stop = -1) {
+#ifdef HIREDIS_AVAILABLE
+        if (!m_context) return QVariantList();
+        
+        redisReply *reply = (redisReply*)redisCommand(m_context, "LRANGE %s %d %d", 
+                                                     key.toUtf8().data(), start, stop);
+        if (!reply || reply->type != REDIS_REPLY_ARRAY) {
+            if (reply) freeReplyObject(reply);
+            return QVariantList();
+        }
+        
+        QVariantList result;
+        for (size_t i = 0; i < reply->elements; i++) {
+            if (reply->element[i]->type == REDIS_REPLY_STRING) {
+                result.append(QString::fromUtf8(reply->element[i]->str));
+            }
+        }
+        
+        freeReplyObject(reply);
+        return result;
+#else
+        Q_UNUSED(key)
+        Q_UNUSED(start)
+        Q_UNUSED(stop)
+        return QVariantList();
+#endif
+    }
 
 signals:
     void connectedChanged();

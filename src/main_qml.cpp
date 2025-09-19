@@ -50,8 +50,12 @@ int main(int argc, char *argv[]) {
     qInfo() << "Qt Version:" << QT_VERSION_STR;
     qInfo() << "Loading QML application...";
     
-    // Load main QML file
+    // Load main QML file (Redis version if available)
+#ifdef QML_REDIS_FRONTEND
+    const QUrl url(u"qrc:/qml/MainRedis.qml"_qs);
+#else
     const QUrl url(u"qrc:/qml/MainQML.qml"_qs);
+#endif
     
     // Handle QML loading errors
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
