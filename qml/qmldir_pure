@@ -1,0 +1,43 @@
+module Frontend
+typeinfo plugins.qmltypes
+
+# Main Application Components
+MainQML 1.0 MainQML.qml
+Theme 1.0 Theme.qml
+
+# Services
+DataService 1.0 services/DataService.qml
+
+# Modern UI Components
+StatusIndicator 1.0 components/StatusIndicator.qml
+ModernSideNav 1.0 components/ModernSideNav.qml
+ModernMarketView 1.0 components/ModernMarketView.qml
+ModernChartView 1.0 components/ModernChartView.qml
+ModernPortfolioView 1.0 components/ModernPortfolioView.qml
+ModernOrdersView 1.0 components/ModernOrdersView.qml
+ModernSettingsView 1.0 components/ModernSettingsView.qml
+NotificationDrawer 1.0 components/NotificationDrawer.qml
+NotificationItem 1.0 components/NotificationItem.qml
+
+# Market Components
+MarketStatCard 1.0 components/MarketStatCard.qml
+MarketRowDelegate 1.0 components/MarketRowDelegate.qml
+
+# Portfolio Components
+PortfolioSummaryCard 1.0 components/PortfolioSummaryCard.qml
+PortfolioRowDelegate 1.0 components/PortfolioRowDelegate.qml
+
+# Order Components
+OrderStatCard 1.0 components/OrderStatCard.qml
+OrderRowDelegate 1.0 components/OrderRowDelegate.qml
+
+# Legacy Components (backward compatibility)
+HeaderBar 1.0 components/HeaderBar.qml
+SideNav 1.0 components/SideNav.qml
+MarketList 1.0 components/MarketList.qml
+StatusBadge 1.0 components/StatusBadge.qml
+CandleChart 1.0 components/CandleChart.qml
+AnimatedCard 1.0 components/AnimatedCard.qml
+CandleChartEnhanced 1.0 components/CandleChartEnhanced.qml
+MarketListEnhanced 1.0 components/MarketListEnhanced.qml
+MyLabel 1.0 components/MyLabel.qml

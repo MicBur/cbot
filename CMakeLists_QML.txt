@@ -1,0 +1,154 @@
+cmake_minimum_required(VERSION 3.21)
+project(QtTradeFrontend_QML VERSION 1.0.0 LANGUAGES CXX)
+
+# Pure QML Frontend - Minimal C++ approach
+
+# QML Language Server Configuration
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
+# Qt Meta-Object / Resources automatic generation
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Qt Dependencies (minimal for QML app)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick)
+
+# Optional: Add WebSockets support for real-time data
+find_package(Qt${QT_VERSION_MAJOR} QUIET COMPONENTS WebSockets)
+if(Qt${QT_VERSION_MAJOR}WebSockets_FOUND)
+    message(STATUS "WebSockets support enabled")
+    set(WEBSOCKETS_AVAILABLE TRUE)
+else()
+    message(STATUS "WebSockets not found - using HTTP fallback")
+    set(WEBSOCKETS_AVAILABLE FALSE)
+endif()
+
+# Minimal C++ sources (just main.cpp)
+set(SOURCES
+    src/main_qml.cpp
+)
+
+# Create executable
+qt_add_executable(QtTradeFrontend_QML
+    ${SOURCES}
+)
+
+# Version header generation
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.in.h ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h @ONLY)
+target_include_directories(QtTradeFrontend_QML PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+# QML Module definition
+qt_add_qml_module(QtTradeFrontend_QML
+    URI Frontend
+    VERSION 1.0
+    QML_FILES
+        # Main application
+        qml/MainQML.qml
+        qml/Theme.qml
+        
+        # Services
+        qml/services/DataService.qml
+        
+        # Modern Components
+        qml/components/StatusIndicator.qml
+        qml/components/ModernSideNav.qml
+        qml/components/ModernMarketView.qml
+        qml/components/ModernChartView.qml
+        qml/components/ModernPortfolioView.qml
+        qml/components/ModernOrdersView.qml
+        qml/components/ModernSettingsView.qml
+        qml/components/NotificationDrawer.qml
+        qml/components/NotificationItem.qml
+        
+        # Market Components
+        qml/components/MarketStatCard.qml
+        qml/components/MarketRowDelegate.qml
+        
+        # Portfolio Components
+        qml/components/PortfolioSummaryCard.qml
+        qml/components/PortfolioRowDelegate.qml
+        
+        # Order Components
+        qml/components/OrderStatCard.qml
+        qml/components/OrderRowDelegate.qml
+        
+        # Legacy components (for compatibility)
+        qml/components/HeaderBar.qml
+        qml/components/SideNav.qml
+        qml/components/MarketList.qml
+        qml/components/StatusBadge.qml
+        qml/components/CandleChart.qml
+        qml/components/AnimatedCard.qml
+        qml/components/CandleChartEnhanced.qml
+        qml/components/MarketListEnhanced.qml
+        qml/components/MyLabel.qml
+)
+
+# Link Qt libraries
+target_link_libraries(QtTradeFrontend_QML PRIVATE 
+    Qt::Core 
+    Qt::Quick
+)
+
+# Add WebSockets if available
+if(WEBSOCKETS_AVAILABLE)
+    target_link_libraries(QtTradeFrontend_QML PRIVATE Qt::WebSockets)
+    target_compile_definitions(QtTradeFrontend_QML PRIVATE WEBSOCKETS_AVAILABLE)
+endif()
+
+# Compiler definitions for QML app
+target_compile_definitions(QtTradeFrontend_QML PRIVATE 
+    QML_FRONTEND
+    QT_QML_DEBUG
+)
+
+# Install configuration
+install(TARGETS QtTradeFrontend_QML
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION bin
+)
+
+# Development helper: QML debugging
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(QtTradeFrontend_QML PRIVATE QT_QML_DEBUG)
+endif()
+
+# Platform-specific configurations
+if(WIN32)
+    # Windows deployment comment
+    message(STATUS "For Windows deployment, use: windeployqt QtTradeFrontend_QML.exe")
+elseif(APPLE)
+    # macOS bundle configuration
+    set_target_properties(QtTradeFrontend_QML PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist.in
+    )
+elseif(UNIX)
+    # Linux desktop entry
+    configure_file(${CMAKE_SOURCE_DIR}/QtTradeFrontend.desktop.in 
+                   ${CMAKE_BINARY_DIR}/QtTradeFrontend_QML.desktop @ONLY)
+endif()
+
+# Custom target for QML linting (if qmllint is available)
+find_program(QMLLINT_EXECUTABLE qmllint)
+if(QMLLINT_EXECUTABLE)
+    add_custom_target(qml_lint
+        COMMAND ${QMLLINT_EXECUTABLE} ${CMAKE_SOURCE_DIR}/qml
+        COMMENT "Running QML linter"
+        VERBATIM
+    )
+    message(STATUS "QML linting target available: make qml_lint")
+endif()
+
+# Print configuration summary
+message(STATUS "=== QtTrade Frontend QML Configuration ===")
+message(STATUS "Qt Version: ${Qt${QT_VERSION_MAJOR}_VERSION}")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "WebSockets: ${WEBSOCKETS_AVAILABLE}")
+message(STATUS "QML Language Server: ${QT_QML_GENERATE_QMLLS_INI}")
+message(STATUS "==========================================")

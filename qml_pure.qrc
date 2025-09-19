@@ -1,0 +1,47 @@
+<RCC>
+  <qresource prefix="/qml">
+    <!-- Main Application -->
+    <file alias="MainQML.qml">qml/MainQML.qml</file>
+    <file alias="Theme.qml">qml/Theme.qml</file>
+    
+    <!-- Services -->
+    <file alias="services/DataService.qml">qml/services/DataService.qml</file>
+    
+    <!-- Modern UI Components -->
+    <file alias="components/StatusIndicator.qml">qml/components/StatusIndicator.qml</file>
+    <file alias="components/ModernSideNav.qml">qml/components/ModernSideNav.qml</file>
+    <file alias="components/ModernMarketView.qml">qml/components/ModernMarketView.qml</file>
+    <file alias="components/ModernChartView.qml">qml/components/ModernChartView.qml</file>
+    <file alias="components/ModernPortfolioView.qml">qml/components/ModernPortfolioView.qml</file>
+    <file alias="components/ModernOrdersView.qml">qml/components/ModernOrdersView.qml</file>
+    <file alias="components/ModernSettingsView.qml">qml/components/ModernSettingsView.qml</file>
+    <file alias="components/NotificationDrawer.qml">qml/components/NotificationDrawer.qml</file>
+    <file alias="components/NotificationItem.qml">qml/components/NotificationItem.qml</file>
+    
+    <!-- Market Components -->
+    <file alias="components/MarketStatCard.qml">qml/components/MarketStatCard.qml</file>
+    <file alias="components/MarketRowDelegate.qml">qml/components/MarketRowDelegate.qml</file>
+    
+    <!-- Portfolio Components -->
+    <file alias="components/PortfolioSummaryCard.qml">qml/components/PortfolioSummaryCard.qml</file>
+    <file alias="components/PortfolioRowDelegate.qml">qml/components/PortfolioRowDelegate.qml</file>
+    
+    <!-- Order Components -->
+    <file alias="components/OrderStatCard.qml">qml/components/OrderStatCard.qml</file>
+    <file alias="components/OrderRowDelegate.qml">qml/components/OrderRowDelegate.qml</file>
+    
+    <!-- Legacy Components (for backward compatibility) -->
+    <file alias="components/HeaderBar.qml">qml/components/HeaderBar.qml</file>
+    <file alias="components/SideNav.qml">qml/components/SideNav.qml</file>
+    <file alias="components/MarketList.qml">qml/components/MarketList.qml</file>
+    <file alias="components/StatusBadge.qml">qml/components/StatusBadge.qml</file>
+    <file alias="components/CandleChart.qml">qml/components/CandleChart.qml</file>
+    <file alias="components/AnimatedCard.qml">qml/components/AnimatedCard.qml</file>
+    <file alias="components/CandleChartEnhanced.qml">qml/components/CandleChartEnhanced.qml</file>
+    <file alias="components/MarketListEnhanced.qml">qml/components/MarketListEnhanced.qml</file>
+    <file alias="components/MyLabel.qml">qml/components/MyLabel.qml</file>
+    
+    <!-- QML Module definition -->
+    <file alias="qmldir">qml/qmldir</file>
+  </qresource>
+</RCC>
