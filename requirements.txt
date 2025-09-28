@@ -5,3 +5,8 @@ requests==2.32.3
 celery==5.4.0
 python-dotenv
 xai-sdk
+holidays
+pytz
+yfinance
+pandas
+numpy

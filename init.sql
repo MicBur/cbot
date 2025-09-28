@@ -76,6 +76,37 @@ CREATE TABLE IF NOT EXISTS grok_deepersearch_results (
 );
 CREATE INDEX IF NOT EXISTS idx_grok_deepersearch_ticker_time ON grok_deepersearch_results(ticker, time);
 
+-- Neue vereinheitlichte Grok Deepersearch Tabelle (vereinfachte, aktuelle Struktur)
+CREATE TABLE IF NOT EXISTS grok_deepersearch (
+    id SERIAL PRIMARY KEY,
+    time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ticker TEXT NOT NULL,
+    sentiment DOUBLE PRECISION,
+    explanation_de TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_grok_deepersearch_ticker_time_new ON grok_deepersearch(ticker, time);
+
+-- Grok Top Stocks Prognose
+CREATE TABLE IF NOT EXISTS grok_topstocks (
+    id SERIAL PRIMARY KEY,
+    time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ticker TEXT NOT NULL,
+    expected_gain DOUBLE PRECISION,
+    sentiment DOUBLE PRECISION,
+    reason TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_grok_topstocks_ticker_time ON grok_topstocks(ticker, time);
+
+-- Grok Health Log (optional für Monitoring)
+CREATE TABLE IF NOT EXISTS grok_health_log (
+    id SERIAL PRIMARY KEY,
+    time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sdk_ok BOOLEAN,
+    http_ok BOOLEAN,
+    error TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_grok_health_log_time ON grok_health_log(time);
+
 -- Alpaca Account
 CREATE TABLE IF NOT EXISTS alpaca_account (
     id SERIAL PRIMARY KEY,
